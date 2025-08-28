@@ -9,10 +9,13 @@ import Charts from './components/Charts';
 import ErrorBoundary from './components/ErrorBoundary';
 import FounderConfiguration from './components/FounderConfiguration';
 import FundingRoundsConfiguration from './components/FundingRoundsConfiguration';
+import WhatIfAnalysis from './components/WhatIfAnalysis';
+import ExitScenarioModeling from './components/ExitScenarioModeling';
+import CommentSystem from './components/CommentSystem';
 
 function App() {
   // Tab state
-  const [activeTab, setActiveTab] = useState('founders');
+  const [activeTab, setActiveTab] = useState('companies');
   
   // Default state values to prevent runtime errors
   const [founders, setFounders] = useState([
@@ -151,26 +154,27 @@ function App() {
     setCurrentValuation(newValuation);
   };
   
-  const handleCompanySubmit = () => {
-    if (!companyName.trim()) return;
-    
-    const newCompany = {
-      id: `company-${Date.now()}`,
-      name: companyName.trim(),
-      description: companyDescription.trim(),
-      industry: companyIndustry.trim() || 'Technology',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-    
-    setCompanies([...companies, newCompany]);
-    setSelectedCompanyId(newCompany.id);
-    setIsCompanyLoading(false);
-    setIsCompanyModalOpen(false);
-    setCompanyName('');
-    setCompanyDescription('');
-    setCompanyIndustry('');
-  };
+     const handleCompanySubmit = () => {
+     if (!companyName.trim()) return;
+     
+     const newCompany = {
+       id: `company-${Date.now()}`,
+       name: companyName.trim(),
+       description: companyDescription.trim(),
+       industry: companyIndustry.trim() || 'Technology',
+       createdAt: new Date().toISOString(),
+       updatedAt: new Date().toISOString()
+     };
+     
+     setCompanies([...companies, newCompany]);
+     setSelectedCompanyId(newCompany.id);
+     setActiveTab('companies'); // Switch to companies tab
+     setIsCompanyLoading(false);
+     setIsCompanyModalOpen(false);
+     setCompanyName('');
+     setCompanyDescription('');
+     setCompanyIndustry('');
+   };
   
   const handleCompanyClose = () => {
     setIsCompanyModalOpen(false);
@@ -224,158 +228,341 @@ function App() {
               + New Company
             </button>
           </div>
-        </div>
+                </div>
       </header>
       
-      {/* Tab Navigation */}
-      <div className="tab-navigation">
-        <button
-          className={`tab-button ${activeTab === 'founders' ? 'active' : ''}`}
-          onClick={() => setActiveTab('founders')}
-        >
-          👥 Founders
-        </button>
-        <button
-          className={`tab-button ${activeTab === 'funding' ? 'active' : ''}`}
-          onClick={() => setActiveTab('funding')}
-        >
-          💰 Funding Rounds
-        </button>
-        <button
-          className={`tab-button ${activeTab === 'esop' ? 'active' : ''}`}
-          onClick={() => setActiveTab('esop')}
-        >
-          📈 ESOP Management
-        </button>
-        <button
-          className={`tab-button ${activeTab === 'results' ? 'active' : ''}`}
-          onClick={() => setActiveTab('results')}
-        >
-          📊 Results
-        </button>
-        <button
-          className={`tab-button ${activeTab === 'scenarios' ? 'active' : ''}`}
-          onClick={() => setActiveTab('scenarios')}
-        >
-          📋 Scenarios
-        </button>
-        <button
-          className={`tab-button ${activeTab === 'companies' ? 'active' : ''}`}
-          onClick={() => setActiveTab('companies')}
-        >
-          🏢 Companies
-        </button>
-        <button
-          className={`tab-button ${activeTab === 'charts' ? 'active' : ''}`}
-          onClick={() => setActiveTab('charts')}
-        >
-          📊 Charts
-        </button>
+      {/* Features Section */}
+      <div className="features-section">
+        <div className="features-container">
+          <div className="features-header">
+            <h2>🚀 Powerful Startup Financial Modeling</h2>
+            <p>Everything you need to model, analyze, and optimize your startup's financial future</p>
+          </div>
+          
+          <div className="features-grid">
+            <div className="feature-card">
+              <div className="feature-icon">🏢</div>
+              <h3>Company Management</h3>
+              <p>Create and manage multiple companies with detailed profiles and industry categorization</p>
+            </div>
+            
+            <div className="feature-card">
+              <div className="feature-icon">👥</div>
+              <h3>Founder Configuration</h3>
+              <p>Set up founder equity splits, roles, and ownership structure with real-time validation</p>
+            </div>
+            
+            <div className="feature-card">
+              <div className="feature-icon">💰</div>
+              <h3>Funding Rounds</h3>
+              <p>Model SAFE agreements, priced rounds, and track investor relationships</p>
+            </div>
+            
+            <div className="feature-card">
+              <div className="feature-icon">📈</div>
+              <h3>ESOP Management</h3>
+              <p>Design employee stock option plans with vesting schedules and performance metrics</p>
+            </div>
+            
+            <div className="feature-card">
+              <div className="feature-icon">📊</div>
+              <h3>Advanced Analytics</h3>
+              <p>Visualize ownership structure, dilution impact, and financial projections</p>
+            </div>
+            
+            <div className="feature-card">
+              <div className="feature-icon">🎯</div>
+              <h3>What-If Analysis</h3>
+              <p>Interactive sliders to adjust parameters and see real-time changes in projections</p>
+            </div>
+            
+            <div className="feature-card">
+              <div className="feature-icon">🚀</div>
+              <h3>Exit Scenarios</h3>
+              <p>Model IPO, acquisition, and secondary sale projections with detailed financial analysis</p>
+            </div>
+            
+            <div className="feature-card">
+              <div className="feature-icon">💬</div>
+              <h3>Collaboration Tools</h3>
+              <p>Add comments, track feedback, and collaborate with your team on financial decisions</p>
+            </div>
+          </div>
+          
+                     <div className="features-cta">
+             <h3>Ready to Start Modeling?</h3>
+             <p>Choose a company and begin building your startup's financial future</p>
+             <button 
+               className="cta-button"
+               onClick={() => {
+                 setActiveTab('companies');
+                 // Ensure a company is selected to show the dashboard
+                 if (companies.length > 0) {
+                   setSelectedCompanyId(companies[0].id);
+                 }
+               }}
+             >
+               🏢 Get Started
+             </button>
+           </div>
+        </div>
       </div>
       
-      <main className="App-main">
-        {/* Founders Tab */}
-        {activeTab === 'founders' && (
-          <ErrorBoundary>
-            <FounderConfiguration
-              founders={founders}
-              esopPool={esopPool}
-              totalShares={totalShares}
-              onFoundersChange={handleFoundersChange}
-              onEsopPoolChange={handleEsopPoolChange}
-              onTotalSharesChange={handleTotalSharesChange}
-            />
-          </ErrorBoundary>
-        )}
-        
-        {/* Funding Rounds Tab */}
-        {activeTab === 'funding' && (
-          <ErrorBoundary>
-            <FundingRoundsConfiguration
-              fundingRounds={fundingRounds}
-              onFundingRoundsChange={handleFundingRoundsChange}
-              currentValuation={currentValuation}
-              onCurrentValuationChange={handleCurrentValuationChange}
-            />
-          </ErrorBoundary>
-        )}
-        
-        {/* ESOP Tab */}
-        {activeTab === 'esop' && (
-          <ErrorBoundary>
-            <ESOPTab 
-              esopPool={esopPool}
-              esopGrants={esopGrants}
-              onUpdateGrant={handleUpdateGrant}
-              onRemoveGrant={handleRemoveGrant}
-              onAddGrant={handleAddGrant}
-              currentValuation={currentValuation}
-              isEditable={true}
-            />
-          </ErrorBoundary>
-        )}
-        
-        {/* Results Tab */}
-        {activeTab === 'results' && (
-          <div className="results-section">
+      {/* Tab Navigation - Only show when a company is selected */}
+      {selectedCompanyId && selectedCompanyId !== '' && (
+        <div className="tab-navigation">
+          <button
+            className={`tab-button ${activeTab === 'companies' ? 'active' : ''}`}
+            onClick={() => setActiveTab('companies')}
+          >
+            🏢 Companies
+          </button>
+          <button
+            className={`tab-button ${activeTab === 'founders' ? 'active' : ''}`}
+            onClick={() => setActiveTab('founders')}
+          >
+            👥 Founders
+          </button>
+          <button
+            className={`tab-button ${activeTab === 'funding' ? 'active' : ''}`}
+            onClick={() => setActiveTab('funding')}
+          >
+            💰 Funding Rounds
+          </button>
+          <button
+            className={`tab-button ${activeTab === 'esop' ? 'active' : ''}`}
+            onClick={() => setActiveTab('esop')}
+          >
+            📈 ESOP Management
+          </button>
+          <button
+            className={`tab-button ${activeTab === 'results' ? 'active' : ''}`}
+            onClick={() => setActiveTab('results')}
+          >
+            📊 Results
+          </button>
+          <button
+            className={`tab-button ${activeTab === 'scenarios' ? 'active' : ''}`}
+            onClick={() => setActiveTab('scenarios')}
+          >
+            📋 Scenarios
+          </button>
+          <button
+            className={`tab-button ${activeTab === 'charts' ? 'active' : ''}`}
+            onClick={() => setActiveTab('charts')}
+          >
+            📊 Charts
+          </button>
+          <button
+            className={`tab-button ${activeTab === 'what-if' ? 'active' : ''}`}
+            onClick={() => setActiveTab('what-if')}
+          >
+            🎯 What-If Analysis
+          </button>
+          <button
+            className={`tab-button ${activeTab === 'exit-scenarios' ? 'active' : ''}`}
+            onClick={() => setActiveTab('exit-scenarios')}
+          >
+            🚀 Exit Scenarios
+          </button>
+        </div>
+      )}
+      
+      {/* Main Content - Only show when a company is selected */}
+      {selectedCompanyId && selectedCompanyId !== '' ? (
+        <main className="App-main">
+          {/* Founders Tab */}
+          {activeTab === 'founders' && (
             <ErrorBoundary>
-              <ResultsDisplay 
+              <FounderConfiguration
                 founders={founders}
                 esopPool={esopPool}
-                fundingRounds={fundingRounds}
-                exitValuation={exitValuation}
-              />
-            </ErrorBoundary>
-          </div>
-        )}
-        
-        {/* Scenarios Tab */}
-        {activeTab === 'scenarios' && (
-          <div className="scenarios-section">
-            <ErrorBoundary>
-              <ScenarioList 
-                scenarios={scenarios}
-                onLoad={handleLoadScenario}
-                onDelete={handleDeleteScenario}
-              />
-            </ErrorBoundary>
-          </div>
-        )}
-        
-        {/* Companies Tab */}
-        {activeTab === 'companies' && (
-          <div className="companies-section">
-            <ErrorBoundary>
-              <CompanyDashboard
-                companies={companies}
-                selectedCompanyId={selectedCompanyId}
-                onCompanySelect={setSelectedCompanyId}
-                onCompanyDelete={(id) => {
-                  setCompanies(companies.filter(c => c.id !== id));
-                  if (selectedCompanyId === id) {
-                    setSelectedCompanyId(companies[0]?.id || '');
-                  }
-                }}
-              />
-            </ErrorBoundary>
-          </div>
-        )}
-        
-        {/* Charts Tab */}
-        {activeTab === 'charts' && (
-          <div className="charts-section">
-            <ErrorBoundary>
-              <Charts
-                founders={founders}
-                esopPool={esopPool}
-                fundingRounds={fundingRounds}
-                currentValuation={currentValuation}
                 totalShares={totalShares}
+                onFoundersChange={handleFoundersChange}
+                onEsopPoolChange={handleEsopPoolChange}
+                onTotalSharesChange={handleTotalSharesChange}
               />
             </ErrorBoundary>
+          )}
+          
+          {/* Funding Rounds Tab */}
+          {activeTab === 'funding' && (
+            <ErrorBoundary>
+              <FundingRoundsConfiguration
+                fundingRounds={fundingRounds}
+                onFundingRoundsChange={handleFundingRoundsChange}
+                currentValuation={currentValuation}
+                onCurrentValuationChange={handleCurrentValuationChange}
+              />
+            </ErrorBoundary>
+          )}
+          
+          {/* ESOP Tab */}
+          {activeTab === 'esop' && (
+            <ErrorBoundary>
+              <ESOPTab 
+                esopPool={esopPool}
+                esopGrants={esopGrants}
+                onUpdateGrant={handleUpdateGrant}
+                onRemoveGrant={handleRemoveGrant}
+                onAddGrant={handleAddGrant}
+                currentValuation={currentValuation}
+                isEditable={true}
+              />
+            </ErrorBoundary>
+          )}
+          
+          {/* Results Tab */}
+          {activeTab === 'results' && (
+            <div className="results-section">
+              <ErrorBoundary>
+                <ResultsDisplay 
+                  founders={founders}
+                  esopPool={esopPool}
+                  fundingRounds={fundingRounds}
+                  exitValuation={exitValuation}
+                />
+              </ErrorBoundary>
+            </div>
+          )}
+          
+          {/* Scenarios Tab */}
+          {activeTab === 'scenarios' && (
+            <div className="scenarios-section">
+              <ErrorBoundary>
+                <ScenarioList 
+                  scenarios={scenarios}
+                  onLoad={handleLoadScenario}
+                  onDelete={handleDeleteScenario}
+                />
+              </ErrorBoundary>
+            </div>
+          )}
+          
+          {/* Companies Tab */}
+          {activeTab === 'companies' && (
+            <div className="companies-section">
+              <ErrorBoundary>
+                <CompanyDashboard
+                  companies={companies}
+                  selectedCompanyId={selectedCompanyId}
+                  onCompanySelect={setSelectedCompanyId}
+                  onCompanyDelete={(id) => {
+                    setCompanies(companies.filter(c => c.id !== id));
+                    if (selectedCompanyId === id) {
+                      setSelectedCompanyId(companies[0]?.id || '');
+                    }
+                  }}
+                />
+              </ErrorBoundary>
+            </div>
+          )}
+          
+          {/* Charts Tab */}
+          {activeTab === 'charts' && (
+            <div className="charts-section">
+              <ErrorBoundary>
+                <Charts
+                  founders={founders}
+                  esopPool={esopPool}
+                  fundingRounds={fundingRounds}
+                  currentValuation={currentValuation}
+                  totalShares={totalShares}
+                />
+              </ErrorBoundary>
+            </div>
+          )}
+
+          {/* What-If Analysis Tab */}
+          {activeTab === 'what-if' && (
+            <div className="what-if-section">
+              <ErrorBoundary>
+                <WhatIfAnalysis
+                  currentScenario={{
+                    founders,
+                    esopPool,
+                    fundingRounds,
+                    currentValuation,
+                    exitValuation
+                  }}
+                  onParametersChange={(params) => {
+                    console.log('What-If parameters changed:', params);
+                    // Here you can implement logic to update the main scenario
+                  }}
+                />
+              </ErrorBoundary>
+            </div>
+          )}
+
+          {/* Exit Scenarios Tab */}
+          {activeTab === 'exit-scenarios' && (
+            <div className="exit-scenarios-section">
+              <ErrorBoundary>
+                <ExitScenarioModeling
+                  currentValuation={currentValuation}
+                  founders={founders}
+                  esopPool={esopPool}
+                  fundingRounds={fundingRounds}
+                  onScenarioChange={(scenarios) => {
+                    console.log('Exit scenarios changed:', scenarios);
+                    // Here you can implement logic to save scenarios
+                  }}
+                />
+              </ErrorBoundary>
+            </div>
+          )}
+
+          {/* Comments Tab - Integrated into other tabs */}
+          {activeTab === 'founders' && (
+            <div className="comments-section">
+              <ErrorBoundary>
+                <CommentSystem
+                  entityId="founders-config"
+                  entityType="founder"
+                  entityName="Founder Configuration"
+                  onCommentsChange={(comments) => {
+                    console.log('Founder comments changed:', comments);
+                  }}
+                  currentUser={{
+                    name: "Current User",
+                    role: "Founder"
+                  }}
+                />
+              </ErrorBoundary>
+            </div>
+          )}
+        </main>
+      ) : (
+        /* Welcome Message when no company is selected */
+        <div className="welcome-section">
+          <div className="welcome-container">
+            <div className="welcome-content">
+              <h2>🎉 Welcome to Startup Value Simulator!</h2>
+              <p>Select a company from the dropdown above or create a new one to get started with your financial modeling journey.</p>
+                             <div className="welcome-actions">
+                 <button 
+                   className="welcome-button primary"
+                   onClick={() => setIsCompanyModalOpen(true)}
+                 >
+                   🏢 Create New Company
+                 </button>
+                 <button 
+                   className="welcome-button secondary"
+                   onClick={() => {
+                     setActiveTab('companies');
+                     // Ensure a company is selected to show the dashboard
+                     if (companies.length > 0) {
+                       setSelectedCompanyId(companies[0].id);
+                     }
+                   }}
+                 >
+                   📋 View All Companies
+                 </button>
+               </div>
+            </div>
           </div>
-        )}
-      </main>
+        </div>
+      )}
       
       <ErrorBoundary>
         <CompanyModal 
