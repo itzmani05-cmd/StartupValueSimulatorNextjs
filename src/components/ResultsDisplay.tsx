@@ -1,18 +1,28 @@
 import React from 'react';
 
 interface Founder {
+  id: string;
   name: string;
+  equityPercentage: number;
   shares: number;
-  ownership: number;
-  value: number;
+  role: string;
 }
 
 interface FundingRound {
+  id: string;
   name: string;
+  roundType: 'SAFE' | 'Priced Round';
   capitalRaised: number;
   valuation: number;
-  type: string;
-  esopAdjustment: number;
+  valuationType: 'pre-money' | 'post-money';
+  sharesIssued?: number;
+  sharePrice?: number;
+  valuationCap?: number;
+  discountRate?: number;
+  conversionTrigger?: 'next-round' | 'exit' | 'ipo';
+  investors: string[];
+  date: string;
+  notes: string;
 }
 
 interface ResultsDisplayProps {
@@ -28,17 +38,34 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
   fundingRounds,
   exitValuation
 }) => {
+  // Add safety checks for undefined or null values
+  if (!founders || !Array.isArray(founders) || !fundingRounds || !Array.isArray(fundingRounds)) {
+    return (
+      <div className="results-grid">
+        <div className="ownership-card">
+          <h3>📊 Final Ownership</h3>
+          <p>No data available</p>
+        </div>
+        <div className="payout-card">
+          <h3>💰 Exit Payouts</h3>
+          <p>No data available</p>
+        </div>
+      </div>
+    );
+  }
+
   const esopValue = (esopPool / 100) * exitValuation;
-  const totalInvestorValue = exitValuation - founders.reduce((sum, f) => sum + f.value, 0) - esopValue;
+  const totalFounderValue = founders.reduce((sum, f) => sum + ((f.equityPercentage / 100) * exitValuation), 0);
+  const totalInvestorValue = exitValuation - totalFounderValue - esopValue;
 
   return (
     <div className="results-grid">
       <div className="ownership-card">
         <h3>📊 Final Ownership</h3>
         {founders.map((founder, index) => (
-          <div key={index} className="ownership-item">
+          <div key={founder.id} className="ownership-item">
             <span>{founder.name}</span>
-            <span>{founder.ownership.toFixed(2)}%</span>
+            <span>{founder.equityPercentage.toFixed(2)}%</span>
           </div>
         ))}
         <div className="ownership-item">
@@ -48,7 +75,7 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
         {fundingRounds.length > 0 && (
           <div className="ownership-item">
             <span>Investors</span>
-            <span>{(100 - founders.reduce((sum, f) => sum + f.ownership, 0) - esopPool).toFixed(2)}%</span>
+            <span>{(100 - founders.reduce((sum, f) => sum + f.equityPercentage, 0) - esopPool).toFixed(2)}%</span>
           </div>
         )}
       </div>
@@ -56,9 +83,9 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
       <div className="payout-card">
         <h3>💰 Exit Payouts</h3>
         {founders.map((founder, index) => (
-          <div key={index} className="payout-item">
+          <div key={founder.id} className="payout-item">
             <span>{founder.name}</span>
-            <span>${founder.value.toLocaleString()}</span>
+            <span>${((founder.equityPercentage / 100) * exitValuation).toLocaleString()}</span>
           </div>
         ))}
         <div className="payout-item">
@@ -81,3 +108,4 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
 };
 
 export default ResultsDisplay;
+

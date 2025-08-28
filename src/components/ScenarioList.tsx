@@ -14,6 +14,15 @@ interface ScenarioListProps {
 }
 
 const ScenarioList: React.FC<ScenarioListProps> = ({ scenarios, onLoad, onDelete }) => {
+  // Add safety checks for undefined or null values
+  if (!scenarios || !Array.isArray(scenarios)) {
+    return (
+      <div className="calculation-prompt">
+        <p>No scenarios data available</p>
+      </div>
+    );
+  }
+  
   if (scenarios.length === 0) {
     return (
       <div className="calculation-prompt">
@@ -52,3 +61,4 @@ const ScenarioList: React.FC<ScenarioListProps> = ({ scenarios, onLoad, onDelete
 };
 
 export default ScenarioList;
+
