@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Startup Value Simulator</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/antd@5.12.8/dist/reset.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/antd@5.12.8/dist/antd.min.js"></script>
+    <style>
+        body { margin: 0; padding: 20px; font-family: Arial, sans-serif; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .card { border: 1px solid #ddd; padding: 20px; margin: 20px 0; border-radius: 8px; }
+        .input-group { margin: 10px 0; }
+        .input-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .input-group input { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+        .btn { background: #1890ff; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; }
+        .btn:hover { background: #40a9ff; }
+        .result { background: #f6ffed; border: 1px solid #b7eb8f; padding: 15px; border-radius: 4px; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Startup Value Simulator</h1>
+        
+        <div class="card">
+            <h2>Company Setup</h2>
+            <div class="input-group">
+                <label>Company Name:</label>
+                <input type="text" id="companyName" placeholder="Enter company name">
+            </div>
+            <div class="input-group">
+                <label>Total Shares:</label>
+                <input type="number" id="totalShares" placeholder="1000000">
+            </div>
+            <div class="input-group">
+                <label>Valuation ($):</label>
+                <input type="number" id="valuation" placeholder="5000000">
+            </div>
+            <div class="input-group">
+                <label>ESOP Pool (%):</label>
+                <input type="number" id="esopPool" placeholder="10" min="0" max="100">
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Founders</h2>
+            <div id="foundersList"></div>
+            <button class="btn" onclick="addFounder()">+ Add Founder</button>
+        </div>
+
+        <div class="card">
+            <h2>Funding Rounds</h2>
+            <div id="fundingRoundsList"></div>
+            <button class="btn" onclick="addFundingRound()">+ Add Funding Round</button>
+        </div>
+
+        <div class="card">
+            <button class="btn" onclick="calculateScenario()" style="font-size: 18px; padding: 15px 30px;">
+                🧮 Calculate Scenario
+            </button>
+        </div>
+
+        <div id="results" class="result" style="display: none;">
+            <h3>📊 Results</h3>
+            <div id="resultsContent"></div>
+        </div>
+    </div>
+
+    <script type="text/babel">
+        // Simple state management
+        let state = {
+            company: { name: '', totalShares: 0, valuation: 0, esopPool: 10 },
+            founders: [],
+            fundingRounds: [],
+            results: null
+        };
+
+        // Add founder function
+        function addFounder() {
+            const founder = {
+                id: Date.now(),
+                name: `Founder ${state.founders.length + 1}`,
+                shares: Math.floor(state.company.totalShares * 0.3 / (state.founders.length + 1))
+            };
+            state.founders.push(founder);
+            renderFounders();
+        }
+
+        // Add funding round function
+        function addFundingRound() {
+            const round = {
+                id: Date.now(),
+                name: `Round ${state.fundingRounds.length + 1}`,
+                investment: 1000000,
+                sharesIssued: Math.floor(state.company.totalShares * 0.2)
+            };
+            state.fundingRounds.push(round);
+            renderFundingRounds();
+        }
+
+        // Calculate scenario
+        function calculateScenario() {
+            // Update state from inputs
+            state.company.name = document.getElementById('companyName').value;
+            state.company.totalShares = parseInt(document.getElementById('totalShares').value) || 0;
+            state.company.valuation = parseInt(document.getElementById('valuation').value) || 0;
+            state.company.esopPool = parseInt(document.getElementById('esopPool').value) || 10;
+
+            if (!state.company.name || !state.company.totalShares || !state.company.valuation) {
+                alert('Please fill in all company details');
+                return;
+            }
+
+            // Calculate results
+            const totalFounderShares = state.founders.reduce((sum, f) => sum + f.shares, 0);
+            const totalFundingShares = state.fundingRounds.reduce((sum, r) => sum + r.sharesIssued, 0);
+            const esopShares = Math.floor(state.company.totalShares * state.company.esopPool / 100);
+            const availableShares = state.company.totalShares - totalFounderShares - totalFundingShares;
+
+            state.results = {
+                totalShares: state.company.totalShares,
+                founderShares: totalFounderShares,
+                fundingShares: totalFundingShares,
+                esopShares: esopShares,
+                availableShares: availableShares,
+                founderOwnership: ((totalFounderShares / state.company.totalShares) * 100).toFixed(2),
+                fundingOwnership: ((totalFundingShares / state.company.totalShares) * 100).toFixed(2),
+                esopOwnership: ((esopShares / state.company.totalShares) * 100).toFixed(2),
+                availableOwnership: ((availableShares / state.company.totalShares) * 100).toFixed(2)
+            };
+
+            renderResults();
+        }
+
+        // Render functions
+        function renderFounders() {
+            const container = document.getElementById('foundersList');
+            container.innerHTML = state.founders.map(founder => `
+                <div class="card" style="margin: 10px 0; padding: 15px;">
+                    <strong>${founder.name}</strong><br>
+                    Shares: ${founder.shares.toLocaleString()}
+                    <button onclick="removeFounder(${founder.id})" style="float: right; background: #ff4d4f; padding: 5px 10px;">Remove</button>
+                </div>
+            `).join('');
+        }
+
+        function renderFundingRounds() {
+            const container = document.getElementById('fundingRoundsList');
+            container.innerHTML = state.fundingRounds.map(round => `
+                <div class="card" style="margin: 10px 0; padding: 15px;">
+                    <strong>${round.name}</strong><br>
+                    Investment: $${round.investment.toLocaleString()}<br>
+                    Shares: ${round.sharesIssued.toLocaleString()}
+                    <button onclick="removeFundingRound(${round.id})" style="float: right; background: #ff4d4f; padding: 5px 10px;">Remove</button>
+                </div>
+            `).join('');
+        }
+
+        function renderResults() {
+            const container = document.getElementById('results');
+            const content = document.getElementById('resultsContent');
+            
+            content.innerHTML = `
+                <h4>📈 Ownership Breakdown</h4>
+                <p><strong>Founders:</strong> ${state.results.founderOwnership}% (${state.results.founderShares.toLocaleString()} shares)</p>
+                <p><strong>Funding Rounds:</strong> ${state.results.fundingOwnership}% (${state.results.fundingShares.toLocaleString()} shares)</p>
+                <p><strong>ESOP Pool:</strong> ${state.results.esopOwnership}% (${state.results.esopShares.toLocaleString()} shares)</p>
+                <p><strong>Available:</strong> ${state.results.availableOwnership}% (${state.results.availableShares.toLocaleString()} shares)</p>
+                
+                <h4>💰 Valuation</h4>
+                <p><strong>Company Value:</strong> $${state.company.valuation.toLocaleString()}</p>
+                <p><strong>Share Price:</strong> $${(state.company.valuation / state.company.totalShares).toFixed(2)}</p>
+            `;
+            
+            container.style.display = 'block';
+        }
+
+        // Remove functions
+        function removeFounder(id) {
+            state.founders = state.founders.filter(f => f.id !== id);
+            renderFounders();
+        }
+
+        function removeFundingRound(id) {
+            state.fundingRounds = state.fundingRounds.filter(r => r.id !== id);
+            renderFundingRounds();
+        }
+
+        // Initialize
+        addFounder();
+        addFounder();
+    </script>
+</body>
+</html>

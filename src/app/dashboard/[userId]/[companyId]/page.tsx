@@ -1,11 +1,16 @@
 'use client';
 
 import React from 'react';
-import { useParams } from 'next/navigation';
 
-export default function UserCompanyDashboardPage() {
-  const params = useParams();
-  const userId = params.userId as string;
+interface PageProps {
+  params: {
+    userId: string;
+    companyId: string;
+  };
+}
+
+export default function UserCompanyDashboardPage({ params }: PageProps) {
+  const userId = params.userId;
   const companyId = params.companyId as string;
 
   return (
