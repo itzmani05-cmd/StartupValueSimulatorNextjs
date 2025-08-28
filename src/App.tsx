@@ -44,7 +44,53 @@ function App() {
     { id: '1', name: 'Default Scenario', created_at: new Date().toISOString(), updated_at: new Date().toISOString() }
   ]);
   
-  const [esopGrants] = useState([]);
+  const [esopGrants] = useState([
+    {
+      id: 'grant-1',
+      employeeName: 'Sarah Johnson',
+      employeeId: 'EMP001',
+      position: 'Senior Software Engineer',
+      department: 'Engineering',
+      grantDate: '2023-01-15',
+      sharesGranted: 50000,
+      vestingSchedule: '4-year' as const,
+      cliffPeriod: 12,
+      vestingFrequency: 'monthly' as const,
+      exercisePrice: 0.01,
+      status: 'active' as const,
+      notes: 'Key engineering hire, leading backend development'
+    },
+    {
+      id: 'grant-2',
+      employeeName: 'Michael Chen',
+      employeeId: 'EMP002',
+      position: 'Product Manager',
+      department: 'Product',
+      grantDate: '2023-03-20',
+      sharesGranted: 75000,
+      vestingSchedule: '4-year' as const,
+      cliffPeriod: 12,
+      vestingFrequency: 'monthly' as const,
+      exercisePrice: 0.01,
+      status: 'active' as const,
+      notes: 'Product strategy and roadmap development'
+    },
+    {
+      id: 'grant-3',
+      employeeName: 'Emily Rodriguez',
+      employeeId: 'EMP003',
+      position: 'Marketing Director',
+      department: 'Marketing',
+      grantDate: '2022-11-10',
+      sharesGranted: 60000,
+      vestingSchedule: '3-year' as const,
+      cliffPeriod: 6,
+      vestingFrequency: 'quarterly' as const,
+      exercisePrice: 0.005,
+      status: 'active' as const,
+      notes: 'Brand development and growth marketing'
+    }
+  ]);
   const [currentValuation, setCurrentValuation] = useState(5000000);
   
   // Company management state
