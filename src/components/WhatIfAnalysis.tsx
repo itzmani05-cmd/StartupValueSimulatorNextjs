@@ -7,7 +7,7 @@ interface WhatIfParameters {
   founderEquity: number;
   dilutionRate: number;
   timeToExit: number;
-}
+} 
 
 interface WhatIfAnalysisProps {
   currentScenario: {
@@ -428,3 +428,6 @@ const WhatIfAnalysis: React.FC<WhatIfAnalysisProps> = ({
 };
 
 export default WhatIfAnalysis;
+
+
+

@@ -184,3 +184,6 @@ const WaterfallChart: React.FC<WaterfallChartProps> = ({ fundingRounds, currentV
 };
 
 export default WaterfallChart;
+
+
+

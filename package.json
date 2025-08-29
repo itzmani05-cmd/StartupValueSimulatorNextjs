@@ -7,7 +7,9 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "db:init": "node scripts/init-database.js",
+    "db:check": "node scripts/init-database.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.56.0",

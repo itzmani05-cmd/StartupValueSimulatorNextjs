@@ -66,6 +66,12 @@ const FundingRoundsConfiguration: React.FC<FundingRoundsConfigurationProps> = ({
     setLocalCurrentValuation(currentValuation);
   }, [currentValuation]);
 
+  // Debug state changes
+  useEffect(() => {
+    console.log('isAddingRound state changed:', isAddingRound);
+    console.log('isModalOpen computed value:', isAddingRound || editingRoundId !== null);
+  }, [isAddingRound, editingRoundId]);
+
   const validateRound = (round: Partial<FundingRound>): string[] => {
     const errors: string[] = [];
     
@@ -107,8 +113,11 @@ const FundingRoundsConfiguration: React.FC<FundingRoundsConfigurationProps> = ({
   };
 
   const handleAddRound = () => {
+    console.log('handleAddRound called with newRound:', newRound);
+    
     const errors = validateRound(newRound);
     if (errors.length > 0) {
+      console.log('Validation errors:', errors);
       setValidationErrors(errors);
       return;
     }
@@ -130,11 +139,17 @@ const FundingRoundsConfiguration: React.FC<FundingRoundsConfigurationProps> = ({
       notes: newRound.notes!
     };
     
+    console.log('Created round object:', round);
     const updatedRounds = [...localRounds, round];
+    console.log('Updated rounds:', updatedRounds);
+    
     setLocalRounds(updatedRounds);
+    onFundingRoundsChange(updatedRounds); // Notify parent component
     setIsAddingRound(false);
     setValidationErrors([]);
     resetNewRound();
+    
+    console.log('Round added successfully');
   };
 
   const handleEditRound = (round: FundingRound) => {
@@ -187,6 +202,7 @@ const FundingRoundsConfiguration: React.FC<FundingRoundsConfigurationProps> = ({
     );
     
     setLocalRounds(updatedRounds);
+    onFundingRoundsChange(updatedRounds); // Notify parent component
     setEditingRoundId(null);
     setValidationErrors([]);
     resetNewRound();
@@ -196,6 +212,7 @@ const FundingRoundsConfiguration: React.FC<FundingRoundsConfigurationProps> = ({
     if (window.confirm('Are you sure you want to delete this funding round?')) {
       const updatedRounds = localRounds.filter(round => round.id !== roundId);
       setLocalRounds(updatedRounds);
+      onFundingRoundsChange(updatedRounds); // Notify parent component
     }
   };
 
@@ -379,12 +396,19 @@ const FundingRoundsConfiguration: React.FC<FundingRoundsConfigurationProps> = ({
       {/* Controls and Filters */}
       <div className="controls-section">
         <div className="controls-left">
-          <button 
-            className="add-round-btn"
-            onClick={() => setIsAddingRound(true)}
-          >
-            ➕ Add Funding Round
-          </button>
+                      <button 
+              type="button"
+              className="add-round-btn"
+              onClick={(e) => {
+                e.preventDefault();
+                console.log('Add Round button clicked!');
+                console.log('Setting isAddingRound to true');
+                setIsAddingRound(true);
+                console.log('isAddingRound should now be true');
+              }}
+            >
+              ➕ Add Funding Round
+            </button>
         </div>
         
         <div className="controls-right">
@@ -433,9 +457,19 @@ const FundingRoundsConfiguration: React.FC<FundingRoundsConfigurationProps> = ({
             <div className="empty-icon">💼</div>
             <h3>No Funding Rounds Yet</h3>
             <p>Start building your funding history by adding your first round</p>
-            <button onClick={() => setIsAddingRound(true)} className="empty-action-btn">
-              Add First Round
-            </button>
+                          <button 
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  console.log('Add First Round button clicked!');
+                  console.log('Setting isAddingRound to true');
+                  setIsAddingRound(true);
+                  console.log('isAddingRound should now be true');
+                }} 
+                className="empty-action-btn"
+              >
+                Add First Round
+              </button>
           </div>
         ) : (
           <div className="rounds-grid">
@@ -542,8 +576,10 @@ const FundingRoundsConfiguration: React.FC<FundingRoundsConfigurationProps> = ({
       </div>
 
       {/* Add/Edit Round Modal */}
+      {console.log('About to render modal, isModalOpen:', isModalOpen, 'isAddingRound:', isAddingRound, 'editingRoundId:', editingRoundId)}
       {isModalOpen && (
         <div className="round-modal">
+          {console.log('Modal is being rendered!')}
           <div className="modal-content">
             <div className="modal-header">
               <h3>{modalTitle}</h3>

@@ -26,7 +26,7 @@ interface ESOPTabProps {
   esopGrants: ESOPGrant[];
   onUpdateGrant: (index: number, field: string, value: any) => void;
   onRemoveGrant: (index: number) => void;
-  onAddGrant: () => void;
+  onAddGrant: (grant: ESOPGrant) => void;
   currentValuation: number;
   isEditable: boolean;
 }
@@ -52,7 +52,7 @@ const ESOPTab: React.FC<ESOPTabProps> = ({
     vestingSchedule: '4-year',
     cliffPeriod: 12,
     vestingFrequency: 'monthly',
-    exercisePrice: 0,
+    exercisePrice: 0.01,
     status: 'active',
     notes: ''
   });
@@ -66,7 +66,15 @@ const ESOPTab: React.FC<ESOPTabProps> = ({
   }, [esopGrants]);
 
   const handleAddGrant = () => {
-    if (!newGrant.employeeName || !newGrant.sharesGranted) return;
+    console.log('handleAddGrant called with newGrant:', newGrant);
+    
+    if (!newGrant.employeeName || !newGrant.sharesGranted) {
+      console.log('Validation failed:', { 
+        employeeName: newGrant.employeeName, 
+        sharesGranted: newGrant.sharesGranted 
+      });
+      return;
+    }
     
     const grant: ESOPGrant = {
       id: `grant-${Date.now()}`,
@@ -85,7 +93,8 @@ const ESOPTab: React.FC<ESOPTabProps> = ({
       performanceMetrics: newGrant.performanceMetrics
     };
     
-    onAddGrant();
+    console.log('Created grant object:', grant);
+    onAddGrant(grant);
     setLocalGrants([...localGrants, grant]);
     setIsAddingGrant(false);
     setNewGrant({
@@ -98,7 +107,7 @@ const ESOPTab: React.FC<ESOPTabProps> = ({
       vestingSchedule: '4-year',
       cliffPeriod: 12,
       vestingFrequency: 'monthly',
-      exercisePrice: 0,
+      exercisePrice: 0.01,
       status: 'active',
       notes: ''
     });

@@ -113,6 +113,48 @@ body {
   flex-direction: column;
 }
 
+/* Loading and Saving Indicators */
+.loading-indicator,
+.saving-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-12);
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  margin: var(--spacing-6);
+}
+
+.loading-spinner,
+.saving-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid var(--gray-200);
+  border-top: 4px solid var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: var(--spacing-4);
+}
+
+.saving-spinner {
+  border-top-color: var(--success-color);
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-indicator p,
+.saving-indicator p {
+  color: var(--text-secondary);
+  font-size: var(--font-size-lg);
+  font-weight: 500;
+  margin: 0;
+}
+
 /* Header Styles */
 .App-header {
   background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);

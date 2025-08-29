@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css';
 import ESOPTab from './components/ESOPTab';
 import ResultsDisplay from './components/ResultsDisplay';
@@ -12,6 +12,21 @@ import FundingRoundsConfiguration from './components/FundingRoundsConfiguration'
 import WhatIfAnalysis from './components/WhatIfAnalysis';
 import ExitScenarioModeling from './components/ExitScenarioModeling';
 import CommentSystem from './components/CommentSystem';
+import { 
+  getCompanies, 
+  createCompany, 
+  updateCompany, 
+  deleteCompany,
+  getFounders,
+  getFundingRounds,
+  getEsopGrants,
+  getCompanySettings,
+  saveCompanyData,
+  getScenarios,
+  createScenario,
+  updateScenario,
+  deleteScenario
+} from './lib/supabase';
 
 function App() {
   // Tab state
@@ -41,13 +56,13 @@ function App() {
       notes: 'Initial seed funding'
     }
   ]);
-  const [exitValuation] = useState(10000000);
+  const [exitValuation, setExitValuation] = useState(10000000);
   
-  const [scenarios] = useState([
+  const [scenarios, setScenarios] = useState([
     { id: '1', name: 'Default Scenario', created_at: new Date().toISOString(), updated_at: new Date().toISOString() }
   ]);
   
-  const [esopGrants] = useState([
+  const [esopGrants, setEsopGrants] = useState([
     {
       id: 'grant-1',
       employeeName: 'Sarah Johnson',
@@ -114,24 +129,197 @@ function App() {
   const [isCompanyLoading, setIsCompanyLoading] = useState(false);
   const [selectedCompanyId, setSelectedCompanyId] = useState('company-1');
   
-  const handleLoadScenario = (scenarioId: string) => {
-    console.log('Loading scenario:', scenarioId);
+  // Loading states
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  
+  // Load data from database on component mount
+  useEffect(() => {
+    loadCompaniesFromDatabase();
+  }, []);
+
+  // Load company data when selected company changes
+  useEffect(() => {
+    if (selectedCompanyId && selectedCompanyId !== 'company-1') {
+      loadCompanyDataFromDatabase(selectedCompanyId);
+    }
+  }, [selectedCompanyId]);
+
+  const loadCompaniesFromDatabase = async () => {
+    try {
+      setIsLoading(true);
+      const companiesData = await getCompanies();
+      if (companiesData && companiesData.length > 0) {
+        setCompanies(companiesData.map(company => ({
+          id: company.id,
+          name: company.name,
+          description: company.description || '',
+          industry: company.industry || 'Technology',
+          createdAt: company.created_at,
+          updatedAt: company.updated_at
+        })));
+        setSelectedCompanyId(companiesData[0].id);
+      }
+    } catch (error) {
+      console.error('Failed to load companies:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const loadCompanyDataFromDatabase = async (companyId: string) => {
+    try {
+      setIsLoading(true);
+      
+      // Load founders
+      const foundersData = await getFounders(companyId);
+      if (foundersData) {
+        setFounders(foundersData.map(founder => ({
+          id: founder.id,
+          name: founder.name,
+          equityPercentage: founder.equity_percentage,
+          shares: founder.shares,
+          role: founder.role || ''
+        })));
+      }
+
+      // Load funding rounds
+      const fundingRoundsData = await getFundingRounds(companyId);
+      if (fundingRoundsData) {
+        setFundingRounds(fundingRoundsData.map(round => ({
+          id: round.id,
+          name: round.name,
+          roundType: round.round_type as 'SAFE' | 'Priced Round',
+          capitalRaised: round.capital_raised,
+          valuation: round.valuation,
+          valuationType: round.valuation_type as 'pre-money' | 'post-money',
+          sharesIssued: round.shares_issued,
+          sharePrice: round.share_price,
+          valuationCap: round.valuation_cap,
+          discountRate: round.discount_rate,
+          conversionTrigger: round.conversion_trigger as 'next-round' | 'exit' | 'ipo',
+          investors: round.investors,
+          date: round.round_date,
+          notes: round.notes || ''
+        })));
+      }
+
+      // Load ESOP grants
+      const esopGrantsData = await getEsopGrants(companyId);
+      if (esopGrantsData) {
+        setEsopGrants(esopGrantsData.map(grant => ({
+          id: grant.id,
+          employeeName: grant.employee_name,
+          employeeId: grant.employee_id || '',
+          position: grant.position || '',
+          department: grant.department || '',
+          grantDate: grant.grant_date,
+          sharesGranted: grant.shares_granted,
+          vestingSchedule: grant.vesting_schedule as '3-year' | '4-year' | '5-year',
+          cliffPeriod: grant.cliff_period,
+          vestingFrequency: grant.vesting_frequency as 'monthly' | 'quarterly' | 'annually',
+          exercisePrice: grant.exercise_price,
+          status: grant.status as 'active' | 'vested' | 'exercised' | 'forfeited' | 'expired',
+          notes: grant.notes || ''
+        })));
+      }
+
+      // Load company settings
+      try {
+        const companySettingsData = await getCompanySettings(companyId);
+        if (companySettingsData) {
+          setCurrentValuation(companySettingsData.current_valuation);
+          setEsopPool(companySettingsData.esop_pool_percentage);
+          setTotalShares(companySettingsData.total_shares);
+        }
+      } catch (error) {
+        // Company settings don't exist yet, use defaults
+        console.log('No company settings found, using defaults');
+      }
+
+    } catch (error) {
+      console.error('Failed to load company data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const saveCompanyDataToDatabase = async () => {
+    if (!selectedCompanyId || selectedCompanyId === 'company-1') return;
+    
+    try {
+      setIsSaving(true);
+      await saveCompanyData(selectedCompanyId, {
+        founders,
+        fundingRounds,
+        esopGrants,
+        companySettings: {
+          currentValuation,
+          esopPool,
+          totalShares,
+          exitValuation
+        }
+      });
+      console.log('Company data saved successfully');
+    } catch (error) {
+      console.error('Failed to save company data:', error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleLoadScenario = async (scenarioId: string) => {
+    try {
+      // Load scenario data from database
+      const scenariosData = await getScenarios(selectedCompanyId);
+      const scenario = scenariosData.find(s => s.id === scenarioId);
+      if (scenario && scenario.data) {
+        // Apply scenario data to current state
+        if (scenario.data.founders) setFounders(scenario.data.founders);
+        if (scenario.data.fundingRounds) setFundingRounds(scenario.data.fundingRounds);
+        if (scenario.data.esopGrants) setEsopGrants(scenario.data.esopGrants);
+        if (scenario.data.companySettings) {
+          setCurrentValuation(scenario.data.companySettings.currentValuation);
+          setEsopPool(scenario.data.companySettings.esopPool);
+          setTotalShares(scenario.data.companySettings.totalShares);
+        }
+        console.log('Scenario loaded:', scenario.name);
+      }
+    } catch (error) {
+      console.error('Failed to load scenario:', error);
+    }
   };
   
-  const handleDeleteScenario = (scenarioId: string) => {
-    console.log('Deleting scenario:', scenarioId);
+  const handleDeleteScenario = async (scenarioId: string) => {
+    try {
+      await deleteScenario(scenarioId);
+      console.log('Scenario deleted:', scenarioId);
+      // Reload scenarios list
+      const updatedScenarios = scenarios.filter(s => s.id !== scenarioId);
+      // Update scenarios state
+    } catch (error) {
+      console.error('Failed to delete scenario:', error);
+    }
   };
   
   const handleUpdateGrant = (index: number, field: string, value: any) => {
     console.log('Updating grant:', index, field, value);
+    const updatedGrants = [...esopGrants];
+    updatedGrants[index] = { ...updatedGrants[index], [field]: value };
+    setEsopGrants(updatedGrants);
   };
   
   const handleRemoveGrant = (index: number) => {
     console.log('Removing grant:', index);
+    const updatedGrants = esopGrants.filter((_, i) => i !== index);
+    setEsopGrants(updatedGrants);
   };
   
-  const handleAddGrant = () => {
-    console.log('Adding new grant');
+  const handleAddGrant = (grant: any) => {
+    console.log('App.tsx handleAddGrant called with:', grant);
+    console.log('Current esopGrants:', esopGrants);
+    setEsopGrants([...esopGrants, grant]);
+    console.log('Updated esopGrants:', [...esopGrants, grant]);
   };
   
   const handleFoundersChange = (newFounders: any[]) => {
@@ -154,27 +342,41 @@ function App() {
     setCurrentValuation(newValuation);
   };
   
-     const handleCompanySubmit = () => {
-     if (!companyName.trim()) return;
-     
-     const newCompany = {
-       id: `company-${Date.now()}`,
-       name: companyName.trim(),
-       description: companyDescription.trim(),
-       industry: companyIndustry.trim() || 'Technology',
-       createdAt: new Date().toISOString(),
-       updatedAt: new Date().toISOString()
-     };
-     
-     setCompanies([...companies, newCompany]);
-     setSelectedCompanyId(newCompany.id);
-     setActiveTab('companies'); // Switch to companies tab
-     setIsCompanyLoading(false);
-     setIsCompanyModalOpen(false);
-     setCompanyName('');
-     setCompanyDescription('');
-     setCompanyIndustry('');
-   };
+  const handleCompanySubmit = async () => {
+    if (!companyName.trim()) return;
+    
+    setIsCompanyLoading(true);
+    
+    try {
+      const newCompany = await createCompany({
+        name: companyName.trim(),
+        description: companyDescription.trim(),
+        industry: companyIndustry.trim() || 'Technology',
+        founded_date: new Date().toISOString().split('T')[0]
+      });
+      
+      const companyData = {
+        id: newCompany.id,
+        name: newCompany.name,
+        description: newCompany.description || '',
+        industry: newCompany.industry || 'Technology',
+        createdAt: newCompany.created_at,
+        updatedAt: newCompany.updated_at
+      };
+      
+      setCompanies([...companies, companyData]);
+      setSelectedCompanyId(newCompany.id);
+      setActiveTab('companies');
+      setIsCompanyModalOpen(false);
+      setCompanyName('');
+      setCompanyDescription('');
+      setCompanyIndustry('');
+    } catch (error) {
+      console.error('Failed to create company:', error);
+    } finally {
+      setIsCompanyLoading(false);
+    }
+  };
   
   const handleCompanyClose = () => {
     setIsCompanyModalOpen(false);
@@ -182,6 +384,31 @@ function App() {
     setCompanyDescription('');
     setCompanyIndustry('');
   };
+
+  const handleCompanyDelete = async (companyId: string) => {
+    try {
+      await deleteCompany(companyId);
+      const updatedCompanies = companies.filter(c => c.id !== companyId);
+      setCompanies(updatedCompanies);
+      
+      if (selectedCompanyId === companyId) {
+        setSelectedCompanyId(updatedCompanies[0]?.id || '');
+      }
+    } catch (error) {
+      console.error('Failed to delete company:', error);
+    }
+  };
+
+  // Auto-save data when it changes
+  useEffect(() => {
+    if (selectedCompanyId && selectedCompanyId !== 'company-1') {
+      const timeoutId = setTimeout(() => {
+        saveCompanyDataToDatabase();
+      }, 2000); // Save after 2 seconds of inactivity
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [founders, fundingRounds, esopGrants, currentValuation, esopPool, totalShares, selectedCompanyId]);
 
   return (
     <div className="App">
@@ -228,7 +455,7 @@ function App() {
               + New Company
             </button>
           </div>
-                </div>
+        </div>
       </header>
       
       {/* Features Section */}
@@ -289,22 +516,22 @@ function App() {
             </div>
           </div>
           
-                     <div className="features-cta">
-             <h3>Ready to Start Modeling?</h3>
-             <p>Choose a company and begin building your startup's financial future</p>
-             <button 
-               className="cta-button"
-               onClick={() => {
-                 setActiveTab('companies');
-                 // Ensure a company is selected to show the dashboard
-                 if (companies.length > 0) {
-                   setSelectedCompanyId(companies[0].id);
-                 }
-               }}
-             >
-               🏢 Get Started
-             </button>
-           </div>
+          <div className="features-cta">
+            <h3>Ready to Start Modeling?</h3>
+            <p>Choose a company and begin building your startup's financial future</p>
+            <button 
+              className="cta-button"
+              onClick={() => {
+                setActiveTab('companies');
+                // Ensure a company is selected to show the dashboard
+                if (companies.length > 0) {
+                  setSelectedCompanyId(companies[0].id);
+                }
+              }}
+            >
+              🏢 Get Started
+            </button>
+          </div>
         </div>
       </div>
       
@@ -371,8 +598,24 @@ function App() {
       {/* Main Content - Only show when a company is selected */}
       {selectedCompanyId && selectedCompanyId !== '' ? (
         <main className="App-main">
+          {/* Loading indicator */}
+          {isLoading && (
+            <div className="loading-indicator">
+              <div className="loading-spinner"></div>
+              <p>Loading company data...</p>
+            </div>
+          )}
+
+          {/* Saving indicator */}
+          {isSaving && (
+            <div className="saving-indicator">
+              <div className="saving-spinner"></div>
+              <p>Saving changes...</p>
+            </div>
+          )}
+
           {/* Founders Tab */}
-          {activeTab === 'founders' && (
+          {activeTab === 'founders' && !isLoading && (
             <ErrorBoundary>
               <FounderConfiguration
                 founders={founders}
@@ -386,7 +629,7 @@ function App() {
           )}
           
           {/* Funding Rounds Tab */}
-          {activeTab === 'funding' && (
+          {activeTab === 'funding' && !isLoading && (
             <ErrorBoundary>
               <FundingRoundsConfiguration
                 fundingRounds={fundingRounds}
@@ -398,7 +641,7 @@ function App() {
           )}
           
           {/* ESOP Tab */}
-          {activeTab === 'esop' && (
+          {activeTab === 'esop' && !isLoading && (
             <ErrorBoundary>
               <ESOPTab 
                 esopPool={esopPool}
@@ -413,7 +656,7 @@ function App() {
           )}
           
           {/* Results Tab */}
-          {activeTab === 'results' && (
+          {activeTab === 'results' && !isLoading && (
             <div className="results-section">
               <ErrorBoundary>
                 <ResultsDisplay 
@@ -427,7 +670,7 @@ function App() {
           )}
           
           {/* Scenarios Tab */}
-          {activeTab === 'scenarios' && (
+          {activeTab === 'scenarios' && !isLoading && (
             <div className="scenarios-section">
               <ErrorBoundary>
                 <ScenarioList 
@@ -440,26 +683,21 @@ function App() {
           )}
           
           {/* Companies Tab */}
-          {activeTab === 'companies' && (
+          {activeTab === 'companies' && !isLoading && (
             <div className="companies-section">
               <ErrorBoundary>
                 <CompanyDashboard
                   companies={companies}
                   selectedCompanyId={selectedCompanyId}
                   onCompanySelect={setSelectedCompanyId}
-                  onCompanyDelete={(id) => {
-                    setCompanies(companies.filter(c => c.id !== id));
-                    if (selectedCompanyId === id) {
-                      setSelectedCompanyId(companies[0]?.id || '');
-                    }
-                  }}
+                  onCompanyDelete={handleCompanyDelete}
                 />
               </ErrorBoundary>
             </div>
           )}
           
           {/* Charts Tab */}
-          {activeTab === 'charts' && (
+          {activeTab === 'charts' && !isLoading && (
             <div className="charts-section">
               <ErrorBoundary>
                 <Charts
@@ -474,7 +712,7 @@ function App() {
           )}
 
           {/* What-If Analysis Tab */}
-          {activeTab === 'what-if' && (
+          {activeTab === 'what-if' && !isLoading && (
             <div className="what-if-section">
               <ErrorBoundary>
                 <WhatIfAnalysis
@@ -495,7 +733,7 @@ function App() {
           )}
 
           {/* Exit Scenarios Tab */}
-          {activeTab === 'exit-scenarios' && (
+          {activeTab === 'exit-scenarios' && !isLoading && (
             <div className="exit-scenarios-section">
               <ErrorBoundary>
                 <ExitScenarioModeling
@@ -513,7 +751,7 @@ function App() {
           )}
 
           {/* Comments Tab - Integrated into other tabs */}
-          {activeTab === 'founders' && (
+          {activeTab === 'founders' && !isLoading && (
             <div className="comments-section">
               <ErrorBoundary>
                 <CommentSystem
@@ -539,26 +777,26 @@ function App() {
             <div className="welcome-content">
               <h2>🎉 Welcome to Startup Value Simulator!</h2>
               <p>Select a company from the dropdown above or create a new one to get started with your financial modeling journey.</p>
-                             <div className="welcome-actions">
-                 <button 
-                   className="welcome-button primary"
-                   onClick={() => setIsCompanyModalOpen(true)}
-                 >
-                   🏢 Create New Company
-                 </button>
-                 <button 
-                   className="welcome-button secondary"
-                   onClick={() => {
-                     setActiveTab('companies');
-                     // Ensure a company is selected to show the dashboard
-                     if (companies.length > 0) {
-                       setSelectedCompanyId(companies[0].id);
-                     }
-                   }}
-                 >
-                   📋 View All Companies
-                 </button>
-               </div>
+              <div className="welcome-actions">
+                <button 
+                  className="welcome-button primary"
+                  onClick={() => setIsCompanyModalOpen(true)}
+                >
+                  🏢 Create New Company
+                </button>
+                <button 
+                  className="welcome-button secondary"
+                  onClick={() => {
+                    setActiveTab('companies');
+                    // Ensure a company is selected to show the dashboard
+                    if (companies.length > 0) {
+                      setSelectedCompanyId(companies[0].id);
+                    }
+                  }}
+                >
+                  📋 View All Companies
+                </button>
+              </div>
             </div>
           </div>
         </div>
