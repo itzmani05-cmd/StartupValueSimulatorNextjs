@@ -576,10 +576,8 @@ const FundingRoundsConfiguration: React.FC<FundingRoundsConfigurationProps> = ({
       </div>
 
       {/* Add/Edit Round Modal */}
-      {console.log('About to render modal, isModalOpen:', isModalOpen, 'isAddingRound:', isAddingRound, 'editingRoundId:', editingRoundId)}
       {isModalOpen && (
         <div className="round-modal">
-          {console.log('Modal is being rendered!')}
           <div className="modal-content">
             <div className="modal-header">
               <h3>{modalTitle}</h3>

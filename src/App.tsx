@@ -44,13 +44,13 @@ function App() {
     { 
       id: 'round-1',
       name: 'Seed Round', 
-      roundType: 'SAFE' as const,
+      roundType: 'SAFE' as 'SAFE' | 'Priced Round',
       capitalRaised: 1000000, 
       valuation: 5000000, 
-      valuationType: 'pre-money' as const,
+      valuationType: 'pre-money' as 'pre-money' | 'post-money',
       valuationCap: 5000000,
       discountRate: 20,
-      conversionTrigger: 'next-round' as const,
+      conversionTrigger: 'next-round' as 'next-round' | 'exit' | 'ipo',
       investors: ['Angel Investor 1'],
       date: new Date().toISOString().split('T')[0],
       notes: 'Initial seed funding'
@@ -71,11 +71,11 @@ function App() {
       department: 'Engineering',
       grantDate: '2023-01-15',
       sharesGranted: 50000,
-      vestingSchedule: '4-year' as const,
+      vestingSchedule: '4-year' as '4-year' | '3-year' | '2-year' | 'custom',
       cliffPeriod: 12,
-      vestingFrequency: 'monthly' as const,
+      vestingFrequency: 'monthly' as 'monthly' | 'quarterly' | 'annually',
       exercisePrice: 0.01,
-      status: 'active' as const,
+      status: 'active' as 'active' | 'terminated' | 'fully-vested',
       notes: 'Key engineering hire, leading backend development'
     },
     {
@@ -86,11 +86,11 @@ function App() {
       department: 'Product',
       grantDate: '2023-03-20',
       sharesGranted: 75000,
-      vestingSchedule: '4-year' as const,
+      vestingSchedule: '4-year' as '4-year' | '3-year' | '2-year' | 'custom',
       cliffPeriod: 12,
-      vestingFrequency: 'monthly' as const,
+      vestingFrequency: 'monthly' as 'monthly' | 'quarterly' | 'annually',
       exercisePrice: 0.01,
-      status: 'active' as const,
+      status: 'active' as 'active' | 'terminated' | 'fully-vested',
       notes: 'Product strategy and roadmap development'
     },
     {
@@ -101,11 +101,11 @@ function App() {
       department: 'Marketing',
       grantDate: '2022-11-10',
       sharesGranted: 60000,
-      vestingSchedule: '3-year' as const,
+      vestingSchedule: '3-year' as '4-year' | '3-year' | '2-year' | 'custom',
       cliffPeriod: 6,
-      vestingFrequency: 'quarterly' as const,
+      vestingFrequency: 'quarterly' as 'monthly' | 'quarterly' | 'annually',
       exercisePrice: 0.005,
-      status: 'active' as const,
+      status: 'active' as 'active' | 'terminated' | 'fully-vested',
       notes: 'Brand development and growth marketing'
     }
   ]);
@@ -189,17 +189,18 @@ function App() {
         setFundingRounds(fundingRoundsData.map(round => ({
           id: round.id,
           name: round.name,
-          roundType: round.round_type as 'SAFE' | 'Priced Round',
-          capitalRaised: round.capital_raised,
-          valuation: round.valuation,
-          valuationType: round.valuation_type as 'pre-money' | 'post-money',
-          sharesIssued: round.shares_issued,
-          sharePrice: round.share_price,
-          valuationCap: round.valuation_cap,
-          discountRate: round.discount_rate,
-          conversionTrigger: round.conversion_trigger as 'next-round' | 'exit' | 'ipo',
-          investors: round.investors,
-          date: round.round_date,
+          roundType: (round.round_type === 'SAFE' ? 'SAFE' : 'Priced Round') as 'SAFE' | 'Priced Round',
+          capitalRaised: round.capital_raised || round.investment_amount || 0,
+          valuation: round.valuation || round.pre_money_valuation || 0,
+          valuationType: (round.valuation_type === 'pre-money' ? 'pre-money' : 'post-money') as 'pre-money' | 'post-money',
+          sharesIssued: round.shares_issued || 0,
+          sharePrice: round.share_price || 0,
+          valuationCap: round.valuation_cap || 0,
+          discountRate: round.discount_rate || 0,
+          conversionTrigger: (round.conversion_trigger === 'next_round' ? 'next-round' : 
+                             round.conversion_trigger === 'exit' ? 'exit' : 'ipo') as 'next-round' | 'exit' | 'ipo',
+          investors: Array.isArray(round.investors) ? round.investors : [],
+          date: round.round_date || round.created_at?.split('T')[0] || new Date().toISOString().split('T')[0],
           notes: round.notes || ''
         })));
       }
@@ -213,13 +214,17 @@ function App() {
           employeeId: grant.employee_id || '',
           position: grant.position || '',
           department: grant.department || '',
-          grantDate: grant.grant_date,
-          sharesGranted: grant.shares_granted,
-          vestingSchedule: grant.vesting_schedule as '3-year' | '4-year' | '5-year',
-          cliffPeriod: grant.cliff_period,
-          vestingFrequency: grant.vesting_frequency as 'monthly' | 'quarterly' | 'annually',
-          exercisePrice: grant.exercise_price,
-          status: grant.status as 'active' | 'vested' | 'exercised' | 'forfeited' | 'expired',
+          grantDate: grant.grant_date || grant.created_at?.split('T')[0] || new Date().toISOString().split('T')[0],
+          sharesGranted: grant.shares_granted || 0,
+          vestingSchedule: (grant.vesting_schedule === '3-year' ? '3-year' : 
+                           grant.vesting_schedule === '4-year' ? '4-year' : 
+                           grant.vesting_schedule === '2-year' ? '2-year' : 'custom') as '4-year' | '3-year' | '2-year' | 'custom',
+          cliffPeriod: grant.cliff_period || 12,
+          vestingFrequency: (grant.vesting_frequency === 'monthly' ? 'monthly' : 
+                            grant.vesting_frequency === 'quarterly' ? 'quarterly' : 'annually') as 'monthly' | 'quarterly' | 'annually',
+          exercisePrice: grant.exercise_price || 0.01,
+          status: (grant.status === 'active' ? 'active' : 
+                  grant.status === 'terminated' ? 'terminated' : 'fully-vested') as 'active' | 'terminated' | 'fully-vested',
           notes: grant.notes || ''
         })));
       }
