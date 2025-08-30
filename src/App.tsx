@@ -192,11 +192,8 @@ function App() {
           valuation: round.valuation || round.pre_money_valuation || 0,
           valuationType: (round.valuation_type === 'pre-money' ? 'pre-money' : 'post-money') as 'pre-money' | 'post-money',
           sharesIssued: round.shares_issued || 0,
-          sharePrice: round.share_price || 0,
-          valuationCap: round.valuation_cap || 0,
-          discountRate: round.discount_rate || 0,
-          conversionTrigger: (round.conversion_trigger === 'next_round' ? 'next-round' : 
-                             round.conversion_trigger === 'exit' ? 'exit' : 'ipo') as 'next-round' | 'exit' | 'ipo',
+          sharePrice: round.price_per_share || 0,
+          conversionTrigger: 'next-round' as 'next-round' | 'exit' | 'ipo',
           investors: Array.isArray(round.investors) ? round.investors : [],
           date: round.round_date || round.created_at?.split('T')[0] || new Date().toISOString().split('T')[0],
           notes: round.notes || ''

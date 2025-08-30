@@ -74,6 +74,8 @@ export interface Database {
           equity_percentage: number
           shares: number
           role: string | null
+          initial_ownership: number
+          current_ownership: number
           is_active: boolean | null
           created_at: string
           updated_at: string
@@ -85,6 +87,8 @@ export interface Database {
           equity_percentage: number
           shares: number
           role?: string | null
+          initial_ownership: number
+          current_ownership: number
           is_active?: boolean | null
           created_at?: string
           updated_at?: string
@@ -96,6 +100,8 @@ export interface Database {
           equity_percentage?: number
           shares?: number
           role?: string | null
+          initial_ownership?: number
+          current_ownership?: number
           is_active?: boolean | null
           created_at?: string
           updated_at?: string
@@ -108,13 +114,14 @@ export interface Database {
           name: string
           round_type: string
           capital_raised: number
+          investment_amount: number
           valuation: number
+          pre_money_valuation: number
+          post_money_valuation: number
           valuation_type: string
           shares_issued: number | null
-          share_price: number | null
-          valuation_cap: number | null
-          discount_rate: number | null
-          conversion_trigger: string | null
+          price_per_share: number | null
+          order_number: number
           investors: any
           round_date: string
           notes: string | null
@@ -128,13 +135,14 @@ export interface Database {
           name: string
           round_type: string
           capital_raised: number
+          investment_amount: number
           valuation: number
+          pre_money_valuation: number
+          post_money_valuation: number
           valuation_type: string
           shares_issued?: number | null
-          share_price?: number | null
-          valuation_cap?: number | null
-          discount_rate?: number | null
-          conversion_trigger?: string | null
+          price_per_share?: number | null
+          order_number: number
           investors: any
           round_date: string
           notes?: string | null
@@ -148,13 +156,14 @@ export interface Database {
           name?: string
           round_type?: string
           capital_raised?: number
+          investment_amount?: number
           valuation?: number
+          pre_money_valuation?: number
+          post_money_valuation?: number
           valuation_type?: string
           shares_issued?: number | null
-          share_price?: number | null
-          valuation_cap?: number | null
-          discount_rate?: number | null
-          conversion_trigger?: string | null
+          price_per_share?: number | null
+          order_number?: number
           investors?: any
           round_date?: string
           notes?: string | null
@@ -983,7 +992,9 @@ export async function saveCompanyData(companyId: string, data: {
             name: founder.name,
             equity_percentage: founder.equityPercentage,
             shares: founder.shares,
-            role: founder.role
+            role: founder.role,
+            initial_ownership: founder.equityPercentage,
+            current_ownership: founder.equityPercentage
           });
         } else {
           // Existing founder, update it
@@ -991,7 +1002,9 @@ export async function saveCompanyData(companyId: string, data: {
             name: founder.name,
             equity_percentage: founder.equityPercentage,
             shares: founder.shares,
-            role: founder.role
+            role: founder.role,
+            initial_ownership: founder.equityPercentage,
+            current_ownership: founder.equityPercentage
           });
         }
       }
@@ -1007,13 +1020,14 @@ export async function saveCompanyData(companyId: string, data: {
             name: round.name,
             round_type: round.roundType,
             capital_raised: round.capitalRaised,
+            investment_amount: round.capitalRaised,
             valuation: round.valuation,
+            pre_money_valuation: round.valuation,
+            post_money_valuation: round.valuation + round.capitalRaised,
             valuation_type: round.valuationType,
             shares_issued: round.sharesIssued,
-            share_price: round.sharePrice,
-            valuation_cap: round.valuationCap,
-            discount_rate: round.discountRate,
-            conversion_trigger: round.conversionTrigger,
+            price_per_share: round.sharePrice,
+            order_number: 1,
             investors: round.investors,
             round_date: round.date,
             notes: round.notes
@@ -1024,13 +1038,14 @@ export async function saveCompanyData(companyId: string, data: {
             name: round.name,
             round_type: round.roundType,
             capital_raised: round.capitalRaised,
+            investment_amount: round.capitalRaised,
             valuation: round.valuation,
+            pre_money_valuation: round.valuation,
+            post_money_valuation: round.valuation + round.capitalRaised,
             valuation_type: round.valuationType,
             shares_issued: round.sharesIssued,
-            share_price: round.sharePrice,
-            valuation_cap: round.valuationCap,
-            discount_rate: round.discountRate,
-            conversion_trigger: round.conversionTrigger,
+            price_per_share: round.sharePrice,
+            order_number: 1,
             investors: round.investors,
             round_date: round.date,
             notes: round.notes
