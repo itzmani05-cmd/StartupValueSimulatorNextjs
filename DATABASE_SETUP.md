@@ -360,3 +360,5 @@ After setting up the database:
 
 **Note**: This setup provides a solid foundation for the Startup Value Simulator. For production use, consider implementing user authentication, more restrictive RLS policies, and additional security measures.
 
+
+

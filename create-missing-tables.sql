@@ -112,3 +112,5 @@ WHERE id NOT IN (SELECT company_id FROM company_settings);
 
 -- Success message
 SELECT 'Missing tables created successfully!' as status;
+
+

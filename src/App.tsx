@@ -21,6 +21,7 @@ import {
   getFundingRounds,
   getEsopGrants,
   getCompanySettings,
+  createCompanySettings,
   saveCompanyData,
   getScenarios,
   createScenario,
@@ -123,9 +124,6 @@ function App() {
     }
   ]);
   const [isCompanyModalOpen, setIsCompanyModalOpen] = useState(false);
-  const [companyName, setCompanyName] = useState('');
-  const [companyDescription, setCompanyDescription] = useState('');
-  const [companyIndustry, setCompanyIndustry] = useState('');
   const [isCompanyLoading, setIsCompanyLoading] = useState(false);
   const [selectedCompanyId, setSelectedCompanyId] = useState('company-1');
   
@@ -347,20 +345,27 @@ function App() {
     setCurrentValuation(newValuation);
   };
   
-  const handleCompanySubmit = async () => {
-    if (!companyName.trim()) return;
-    
+  const handleCompanySubmit = async (companyData: any) => {
     setIsCompanyLoading(true);
     
     try {
+      // Create the company first
       const newCompany = await createCompany({
-        name: companyName.trim(),
-        description: companyDescription.trim(),
-        industry: companyIndustry.trim() || 'Technology',
-        founded_date: new Date().toISOString().split('T')[0]
+        name: companyData.name.trim(),
+        description: companyData.description.trim(),
+        industry: companyData.industry.trim() || 'Technology',
+        founded_date: companyData.foundedYear
       });
       
-      const companyData = {
+      // Create company settings with financial data
+      await createCompanySettings({
+        company_id: newCompany.id,
+        current_valuation: companyData.initialValuation,
+        esop_pool_percentage: companyData.esopPool,
+        total_shares: companyData.totalShares
+      });
+      
+      const companyDataFormatted = {
         id: newCompany.id,
         name: newCompany.name,
         description: newCompany.description || '',
@@ -369,13 +374,15 @@ function App() {
         updatedAt: newCompany.updated_at
       };
       
-      setCompanies([...companies, companyData]);
+      setCompanies([...companies, companyDataFormatted]);
       setSelectedCompanyId(newCompany.id);
       setActiveTab('companies');
       setIsCompanyModalOpen(false);
-      setCompanyName('');
-      setCompanyDescription('');
-      setCompanyIndustry('');
+      
+      // Update local state with new company data
+      setTotalShares(companyData.totalShares);
+      setEsopPool(companyData.esopPool);
+      
     } catch (error) {
       console.error('Failed to create company:', error);
     } finally {
@@ -385,9 +392,6 @@ function App() {
   
   const handleCompanyClose = () => {
     setIsCompanyModalOpen(false);
-    setCompanyName('');
-    setCompanyDescription('');
-    setCompanyIndustry('');
   };
 
   const handleCompanyDelete = async (companyId: string) => {
@@ -812,12 +816,6 @@ function App() {
           isOpen={isCompanyModalOpen}
           onClose={handleCompanyClose}
           onSubmit={handleCompanySubmit}
-          companyName={companyName}
-          companyDescription={companyDescription}
-          companyIndustry={companyIndustry}
-          onCompanyNameChange={setCompanyName}
-          onCompanyDescriptionChange={setCompanyDescription}
-          onCompanyIndustryChange={setCompanyIndustry}
           isLoading={isCompanyLoading}
         />
       </ErrorBoundary>

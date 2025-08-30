@@ -49,3 +49,5 @@ LIMIT 5;
 
 -- Success message
 SELECT 'Founders table structure updated successfully!' as status;
+
+

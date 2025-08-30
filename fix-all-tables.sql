@@ -151,3 +151,5 @@ LIMIT 3;
 
 -- Success message
 SELECT 'All table structures updated successfully!' as status;
+
+
