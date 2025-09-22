@@ -1,8 +1,43 @@
 # Dependencies
 node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+.npm/
+
+# Production builds
+/dist/
+/build/
+
+# Logs
+logs
+*.log
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment files
+.env*
+!.env.example
+
+# Typescript
+*.tsbuildinfo
+
+# Vite
+.vite/
+
+# Testing
+coverage/
+*.lcov
 
 # Next.js
 .next/
@@ -180,6 +215,11 @@ jspm_packages/
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+
+
+
+
 
 
 

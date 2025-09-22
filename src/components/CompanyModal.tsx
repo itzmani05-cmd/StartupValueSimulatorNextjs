@@ -20,6 +20,19 @@ interface CompanyFormData {
   website: string;
 }
 
+interface CompanyFormErrors {
+  name?: string;
+  description?: string;
+  industry?: string;
+  foundedYear?: string;
+  totalShares?: string;
+  initialValuation?: string;
+  esopPool?: string;
+  legalStructure?: string;
+  headquarters?: string;
+  website?: string;
+}
+
 const CompanyModal: React.FC<CompanyModalProps> = ({
   isOpen,
   onClose,
@@ -39,7 +52,7 @@ const CompanyModal: React.FC<CompanyModalProps> = ({
     website: ''
   });
 
-  const [errors, setErrors] = useState<Partial<CompanyFormData>>({});
+  const [errors, setErrors] = useState<CompanyFormErrors>({});
   const [touched, setTouched] = useState<Partial<CompanyFormData>>({});
 
   const industries = [
@@ -89,7 +102,7 @@ const CompanyModal: React.FC<CompanyModalProps> = ({
   }, [isOpen]);
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<CompanyFormData> = {};
+    const newErrors: CompanyFormErrors = {};
 
     if (!formData.name.trim()) {
       newErrors.name = 'Company name is required';
@@ -142,13 +155,20 @@ const CompanyModal: React.FC<CompanyModalProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
+    console.log('Form submitted with data:', formData);
+    console.log('Current errors:', errors);
+    
     if (validateForm()) {
+      console.log('Form validation passed');
       // Convert foundedYear to a proper date format (YYYY-01-01)
       const companyDataWithDate = {
         ...formData,
         foundedYear: `${formData.foundedYear}-01-01`
       };
+      console.log('Calling onSubmit with data:', companyDataWithDate);
       onSubmit(companyDataWithDate);
+    } else {
+      console.log('Form validation failed:', errors);
     }
   };
 

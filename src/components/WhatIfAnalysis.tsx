@@ -1,4 +1,16 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { Row, Col, Card, Slider, InputNumber, Button, Typography, Divider, Statistic, Alert } from 'antd';
+import { 
+  DollarOutlined, 
+  TeamOutlined, 
+  BankOutlined, 
+  LineChartOutlined, 
+  ClockCircleOutlined,
+  WarningOutlined,
+  CheckCircleOutlined
+} from '@ant-design/icons';
+
+const { Title, Text, Paragraph } = Typography;
 
 interface WhatIfParameters {
   exitValuation: number;
@@ -124,16 +136,15 @@ const WhatIfAnalysis: React.FC<WhatIfAnalysisProps> = ({
     return `$${amount.toLocaleString()}`;
   };
 
-  // Slider configurations
-  const sliders = [
+  // Parameter configurations with Ant Design components
+  const parameterConfigs = [
     {
       key: 'exitValuation',
       label: 'Exit Valuation',
       min: 1000000,
       max: 1000000000,
       step: 1000000,
-      format: formatCurrency,
-      icon: '💰',
+      icon: <DollarOutlined />,
       description: 'Projected company value at exit'
     },
     {
@@ -142,8 +153,7 @@ const WhatIfAnalysis: React.FC<WhatIfAnalysisProps> = ({
       min: 5,
       max: 30,
       step: 1,
-      format: (value: number) => `${value}%`,
-      icon: '📈',
+      icon: <TeamOutlined />,
       description: 'Employee stock option pool percentage'
     },
     {
@@ -152,8 +162,7 @@ const WhatIfAnalysis: React.FC<WhatIfAnalysisProps> = ({
       min: 0,
       max: 8,
       step: 1,
-      format: (value: number) => `${value} rounds`,
-      icon: '🏦',
+      icon: <BankOutlined />,
       description: 'Number of funding rounds before exit'
     },
     {
@@ -162,8 +171,7 @@ const WhatIfAnalysis: React.FC<WhatIfAnalysisProps> = ({
       min: 5,
       max: 50,
       step: 1,
-      format: (value: number) => `${value}%`,
-      icon: '📉',
+      icon: <LineChartOutlined />,
       description: 'Expected annual ownership dilution'
     },
     {
@@ -172,8 +180,7 @@ const WhatIfAnalysis: React.FC<WhatIfAnalysisProps> = ({
       min: 2,
       max: 15,
       step: 0.5,
-      format: (value: number) => `${value} years`,
-      icon: '⏰',
+      icon: <ClockCircleOutlined />,
       description: 'Years until expected exit'
     }
   ];
@@ -181,246 +188,277 @@ const WhatIfAnalysis: React.FC<WhatIfAnalysisProps> = ({
   return (
     <div className="what-if-analysis">
       <div className="what-if-header">
-        <h2>🎯 What-If Analysis</h2>
-        <p>Adjust parameters in real-time to see how they affect your startup's future</p>
+        <Title level={2}>🎯 What-If Analysis</Title>
+        <Paragraph>Adjust parameters in real-time to see how they affect your startup's future</Paragraph>
       </div>
 
       <div className="what-if-container">
-        {/* Interactive Sliders */}
-        <div className="sliders-section">
-          <div className="sliders-header">
-            <h3>📊 Interactive Parameters</h3>
-            <button 
-              className={`toggle-advanced ${showAdvanced ? 'active' : ''}`}
-              onClick={() => setShowAdvanced(!showAdvanced)}
+        <Row gutter={24}>
+          {/* Interactive Parameters - Left Side */}
+          <Col xs={24} lg={12}>
+            <Card 
+              title={<span><LineChartOutlined /> Interactive Parameters</span>} 
+              className="interactive-parameters-card"
             >
-              {showAdvanced ? 'Hide' : 'Show'} Advanced
-            </button>
-          </div>
-          
-          <div className="sliders-grid">
-            {sliders.map((slider) => (
-              <div 
-                key={slider.key} 
-                className={`slider-card ${activeParameter === slider.key ? 'active' : ''}`}
-                onClick={() => setActiveParameter(slider.key)}
-              >
-                <div className="slider-header">
-                  <span className="slider-icon">{slider.icon}</span>
-                  <div className="slider-info">
-                    <h4>{slider.label}</h4>
-                    <p>{slider.description}</p>
+              <div className="parameters-grid">
+                {parameterConfigs.map((config) => (
+                  <Card 
+                    key={config.key}
+                    className={`parameter-card ${activeParameter === config.key ? 'active' : ''}`}
+                    onClick={() => setActiveParameter(config.key)}
+                  >
+                    <div className="parameter-header">
+                      <div className="parameter-icon">
+                        {config.icon}
+                      </div>
+                      <div className="parameter-info">
+                        <Title level={5}>{config.label}</Title>
+                        <Text type="secondary">{config.description}</Text>
+                      </div>
+                    </div>
+                    
+                    <div className="parameter-control">
+                      <Slider
+                        min={config.min}
+                        max={config.max}
+                        step={config.step}
+                        value={parameters[config.key as keyof WhatIfParameters]}
+                        onChange={(value) => handleParameterChange(config.key as keyof WhatIfParameters, value)}
+                        className="parameter-slider"
+                      />
+                      
+                      <InputNumber
+                        min={config.min}
+                        max={config.max}
+                        step={config.step}
+                        value={parameters[config.key as keyof WhatIfParameters]}
+                        onChange={(value) => handleParameterChange(config.key as keyof WhatIfParameters, value || 0)}
+                        className="parameter-input"
+                      />
+                    </div>
+                  </Card>
+                ))}
+              </div>
+              
+              <div style={{ marginTop: 24, textAlign: 'center' }}>
+                <Button 
+                  type="primary" 
+                  onClick={() => setShowAdvanced(!showAdvanced)}
+                >
+                  {showAdvanced ? 'Hide Advanced Analysis' : 'Show Advanced Analysis'}
+                </Button>
+              </div>
+            </Card>
+          </Col>
+
+          {/* Real-Time Projections - Right Side */}
+          <Col xs={24} lg={12}>
+            <Card 
+              title={<span><DollarOutlined /> Real-Time Projections</span>} 
+              className="projections-card"
+            >
+              <div className="projections-content">
+                {/* Current vs Projected Ownership */}
+                <Card size="small" title="📊 Ownership Structure" className="ownership-card">
+                  <div className="ownership-comparison">
+                    <div className="comparison-row">
+                      <Text strong>Founders</Text>
+                      <div className="comparison-values">
+                        <Text type="secondary">{projections.current.founderEquity.toFixed(1)}%</Text>
+                        <Text>→</Text>
+                        <Text strong>{projections.projected.founderEquity.toFixed(1)}%</Text>
+                      </div>
+                    </div>
+                    
+                    <Divider style={{ margin: '12px 0' }} />
+                    
+                    <div className="comparison-row">
+                      <Text strong>ESOP Pool</Text>
+                      <div className="comparison-values">
+                        <Text type="secondary">{projections.current.esopEquity.toFixed(1)}%</Text>
+                        <Text>→</Text>
+                        <Text strong>{projections.projected.esopEquity.toFixed(1)}%</Text>
+                      </div>
+                    </div>
+                    
+                    <Divider style={{ margin: '12px 0' }} />
+                    
+                    <div className="comparison-row">
+                      <Text strong>Investors</Text>
+                      <div className="comparison-values">
+                        <Text type="secondary">{projections.current.investorEquity.toFixed(1)}%</Text>
+                        <Text>→</Text>
+                        <Text strong>{projections.projected.investorEquity.toFixed(1)}%</Text>
+                      </div>
+                    </div>
                   </div>
-                </div>
-                
-                <div className="slider-control">
-                  <input
-                    type="range"
-                    min={slider.min}
-                    max={slider.max}
-                    step={slider.step}
-                    value={parameters[slider.key as keyof WhatIfParameters]}
-                    onChange={(e) => handleParameterChange(
-                      slider.key as keyof WhatIfParameters, 
-                      parseFloat(e.target.value)
+                </Card>
+
+                {/* Exit Value Projections */}
+                <Card size="small" title="💰 Exit Value Distribution" className="exit-values-card">
+                  <div className="exit-value-breakdown">
+                    <div className="value-row">
+                      <Text>Founder Payout</Text>
+                      <Text strong>{formatCurrency(projections.exitValues.founder)}</Text>
+                    </div>
+                    <div className="value-row">
+                      <Text>ESOP Value</Text>
+                      <Text strong>{formatCurrency(projections.exitValues.esop)}</Text>
+                    </div>
+                    <div className="value-row">
+                      <Text>Investor Returns</Text>
+                      <Text strong>{formatCurrency(projections.exitValues.investor)}</Text>
+                    </div>
+                    <Divider style={{ margin: '12px 0' }} />
+                    <div className="value-row total">
+                      <Text strong>Total Exit Value</Text>
+                      <Text strong type="success">{formatCurrency(parameters.exitValuation)}</Text>
+                    </div>
+                  </div>
+                </Card>
+
+                {/* Key Metrics */}
+                <Card size="small" title="📈 Key Metrics" className="metrics-card">
+                  <Row gutter={16}>
+                    <Col span={12}>
+                      <Statistic 
+                        title="Time to Exit" 
+                        value={projections.timeline.yearsToExit} 
+                        suffix="years" 
+                        precision={1}
+                      />
+                    </Col>
+                    <Col span={12}>
+                      <Statistic 
+                        title="Total Dilution" 
+                        value={projections.timeline.totalDilution} 
+                        suffix="%" 
+                        precision={1}
+                      />
+                    </Col>
+                    <Col span={12}>
+                      <Statistic 
+                        title="Funding Rounds" 
+                        value={projections.funding.rounds} 
+                      />
+                    </Col>
+                    <Col span={12}>
+                      <Statistic 
+                        title="Funding Needed" 
+                        value={projections.funding.totalNeeded} 
+                        formatter={formatCurrency}
+                      />
+                    </Col>
+                  </Row>
+                </Card>
+
+                {/* Key Insights */}
+                <Card size="small" title="💡 Key Insights" className="insights-card">
+                  <div className="insights-list">
+                    {projections.projected.founderEquity < 20 && (
+                      <Alert 
+                        message="⚠️ Founder ownership may drop below 20% - consider anti-dilution protection" 
+                        type="warning" 
+                        showIcon
+                      />
                     )}
-                    className="parameter-slider"
-                  />
-                  
-                  <div className="slider-value">
-                    {slider.format(parameters[slider.key as keyof WhatIfParameters])}
+                    {projections.timeline.totalDilution > 40 && (
+                      <Alert 
+                        message="⚠️ High dilution expected - evaluate funding strategy" 
+                        type="warning" 
+                        showIcon
+                      />
+                    )}
+                    {projections.funding.totalNeeded > parameters.exitValuation * 0.5 && (
+                      <Alert 
+                        message="⚠️ Funding needs exceed 50% of exit value - review business model" 
+                        type="warning" 
+                        showIcon
+                      />
+                    )}
+                    {projections.projected.founderEquity > 40 && (
+                      <Alert 
+                        message="✅ Strong founder ownership maintained through exit" 
+                        type="success" 
+                        showIcon
+                      />
+                    )}
+                    {projections.timeline.yearsToExit < 7 && (
+                      <Alert 
+                        message="✅ Aggressive timeline - potential for rapid growth" 
+                        type="success" 
+                        showIcon
+                      />
+                    )}
                   </div>
-                </div>
-                
-                <div className="slider-range">
-                  <span className="range-min">{slider.format(slider.min)}</span>
-                  <span className="range-max">{slider.format(slider.max)}</span>
-                </div>
+                </Card>
               </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Real-Time Projections */}
-        <div className="projections-section">
-          <div className="projections-header">
-            <h3>🚀 Real-Time Projections</h3>
-            <span className="projection-timestamp">
-              Last updated: {new Date().toLocaleTimeString()}
-            </span>
-          </div>
-          
-          <div className="projections-grid">
-            {/* Current vs Projected Ownership */}
-            <div className="projection-card ownership">
-              <h4>📊 Ownership Structure</h4>
-              <div className="ownership-comparison">
-                <div className="comparison-row">
-                  <span className="comparison-label">Founders</span>
-                  <div className="comparison-values">
-                    <span className="current-value">{projections.current.founderEquity.toFixed(1)}%</span>
-                    <span className="arrow">→</span>
-                    <span className="projected-value">{projections.projected.founderEquity.toFixed(1)}%</span>
-                  </div>
-                </div>
-                
-                <div className="comparison-row">
-                  <span className="comparison-label">ESOP Pool</span>
-                  <div className="comparison-values">
-                    <span className="current-value">{projections.current.esopEquity.toFixed(1)}%</span>
-                    <span className="arrow">→</span>
-                    <span className="projected-value">{projections.projected.esopEquity.toFixed(1)}%</span>
-                  </div>
-                </div>
-                
-                <div className="comparison-row">
-                  <span className="comparison-label">Investors</span>
-                  <div className="comparison-values">
-                    <span className="current-value">{projections.current.investorEquity.toFixed(1)}%</span>
-                    <span className="arrow">→</span>
-                    <span className="projected-value">{projections.projected.investorEquity.toFixed(1)}%</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Exit Value Projections */}
-            <div className="projection-card exit-values">
-              <h4>💰 Exit Value Distribution</h4>
-              <div className="exit-value-breakdown">
-                <div className="value-row">
-                  <span className="value-label">Founder Payout</span>
-                  <span className="value-amount">{formatCurrency(projections.exitValues.founder)}</span>
-                </div>
-                <div className="value-row">
-                  <span className="value-label">ESOP Value</span>
-                  <span className="value-amount">{formatCurrency(projections.exitValues.esop)}</span>
-                </div>
-                <div className="value-row">
-                  <span className="value-label">Investor Returns</span>
-                  <span className="value-amount">{formatCurrency(projections.exitValues.investor)}</span>
-                </div>
-                <div className="value-row total">
-                  <span className="value-label">Total Exit Value</span>
-                  <span className="value-amount">{formatCurrency(parameters.exitValuation)}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Funding & Timeline */}
-            <div className="projection-card funding-timeline">
-              <h4>📅 Funding & Timeline</h4>
-              <div className="timeline-metrics">
-                <div className="metric-row">
-                  <span className="metric-label">Total Funding Needed</span>
-                  <span className="metric-value">{formatCurrency(projections.funding.totalNeeded)}</span>
-                </div>
-                <div className="metric-row">
-                  <span className="metric-label">Funding Rounds</span>
-                  <span className="metric-value">{projections.funding.rounds}</span>
-                </div>
-                <div className="metric-row">
-                  <span className="metric-label">Avg Valuation per Round</span>
-                  <span className="metric-value">{formatCurrency(projections.funding.avgValuation)}</span>
-                </div>
-                <div className="metric-row">
-                  <span className="metric-label">Time to Exit</span>
-                  <span className="metric-value">{projections.timeline.yearsToExit} years</span>
-                </div>
-                <div className="metric-row">
-                  <span className="metric-label">Total Dilution</span>
-                  <span className="metric-value">{projections.timeline.totalDilution.toFixed(1)}%</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Key Insights */}
-            <div className="projection-card insights">
-              <h4>💡 Key Insights</h4>
-              <div className="insights-list">
-                {projections.projected.founderEquity < 20 && (
-                  <div className="insight warning">
-                    ⚠️ Founder ownership may drop below 20% - consider anti-dilution protection
-                  </div>
-                )}
-                {projections.timeline.totalDilution > 40 && (
-                  <div className="insight warning">
-                    ⚠️ High dilution expected - evaluate funding strategy
-                  </div>
-                )}
-                {projections.funding.totalNeeded > parameters.exitValuation * 0.5 && (
-                  <div className="insight warning">
-                    ⚠️ Funding needs exceed 50% of exit value - review business model
-                  </div>
-                )}
-                {projections.projected.founderEquity > 40 && (
-                  <div className="insight success">
-                    ✅ Strong founder ownership maintained through exit
-                  </div>
-                )}
-                {projections.timeline.yearsToExit < 7 && (
-                  <div className="insight success">
-                    ✅ Aggressive timeline - potential for rapid growth
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
+            </Card>
+          </Col>
+        </Row>
 
         {/* Advanced Analysis */}
         {showAdvanced && (
-          <div className="advanced-section">
-            <div className="advanced-header">
-              <h3>🔬 Advanced Analysis</h3>
-              <p>Detailed breakdowns and sensitivity analysis</p>
-            </div>
-            
-            <div className="advanced-grid">
-              <div className="advanced-card">
-                <h4>📈 Dilution Timeline</h4>
-                <div className="dilution-timeline">
-                  {Array.from({ length: Math.ceil(projections.timeline.yearsToExit) }, (_, i) => {
-                    const year = i + 1;
-                    const cumulativeDilution = (1 - Math.pow(1 - projections.timeline.annualDilution / 100, year)) * 100;
-                    const remainingEquity = 100 - cumulativeDilution;
-                    
-                    return (
-                      <div key={year} className="timeline-year">
-                        <span className="year-label">Year {year}</span>
-                        <span className="dilution-amount">{cumulativeDilution.toFixed(1)}%</span>
-                        <span className="remaining-equity">{remainingEquity.toFixed(1)}%</span>
+          <Row gutter={24} style={{ marginTop: 24 }}>
+            <Col span={24}>
+              <Card title="🔬 Advanced Analysis" className="advanced-analysis-card">
+                <Row gutter={24}>
+                  <Col xs={24} md={12}>
+                    <Card size="small" title="📈 Dilution Timeline">
+                      <div className="dilution-timeline">
+                        {Array.from({ length: Math.ceil(projections.timeline.yearsToExit) }, (_, i) => {
+                          const year = i + 1;
+                          const cumulativeDilution = (1 - Math.pow(1 - projections.timeline.annualDilution / 100, year)) * 100;
+                          const remainingEquity = 100 - cumulativeDilution;
+                          
+                          return (
+                            <div key={year} className="timeline-year" style={{ marginBottom: 12 }}>
+                              <Text strong>Year {year}</Text>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8 }}>
+                                <Text type="secondary">Dilution: {cumulativeDilution.toFixed(1)}%</Text>
+                                <Text>Remaining: {remainingEquity.toFixed(1)}%</Text>
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
-                    );
-                  })}
-                </div>
-              </div>
-              
-              <div className="advanced-card">
-                <h4>🎯 Sensitivity Analysis</h4>
-                <div className="sensitivity-matrix">
-                  <div className="sensitivity-row">
-                    <span className="sensitivity-label">Exit Value ±20%</span>
-                    <span className="sensitivity-impact">
-                      {formatCurrency(projections.exitValues.founder * 0.8)} - {formatCurrency(projections.exitValues.founder * 1.2)}
-                    </span>
-                  </div>
-                  <div className="sensitivity-row">
-                    <span className="sensitivity-label">Dilution ±10%</span>
-                    <span className="sensitivity-impact">
-                      {(projections.projected.founderEquity * 1.1).toFixed(1)}% - {(projections.projected.founderEquity * 0.9).toFixed(1)}%
-                    </span>
-                  </div>
-                  <div className="sensitivity-row">
-                    <span className="sensitivity-label">Timeline ±2 years</span>
-                    <span className="sensitivity-impact">
-                      {Math.max(2, projections.timeline.yearsToExit - 2)} - {Math.min(15, projections.timeline.yearsToExit + 2)} years
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+                    </Card>
+                  </Col>
+                  
+                  <Col xs={24} md={12}>
+                    <Card size="small" title="🎯 Sensitivity Analysis">
+                      <div className="sensitivity-analysis">
+                        <div className="sensitivity-row" style={{ marginBottom: 16 }}>
+                          <Text strong>Exit Value ±20%</Text>
+                          <div style={{ marginTop: 8 }}>
+                            <Text type="secondary">
+                              {formatCurrency(projections.exitValues.founder * 0.8)} - {formatCurrency(projections.exitValues.founder * 1.2)}
+                            </Text>
+                          </div>
+                        </div>
+                        <div className="sensitivity-row" style={{ marginBottom: 16 }}>
+                          <Text strong>Dilution ±10%</Text>
+                          <div style={{ marginTop: 8 }}>
+                            <Text type="secondary">
+                              {(projections.projected.founderEquity * 1.1).toFixed(1)}% - {(projections.projected.founderEquity * 0.9).toFixed(1)}%
+                            </Text>
+                          </div>
+                        </div>
+                        <div className="sensitivity-row">
+                          <Text strong>Timeline ±2 years</Text>
+                          <div style={{ marginTop: 8 }}>
+                            <Text type="secondary">
+                              {Math.max(2, projections.timeline.yearsToExit - 2)} - {Math.min(15, projections.timeline.yearsToExit + 2)} years
+                            </Text>
+                          </div>
+                        </div>
+                      </div>
+                    </Card>
+                  </Col>
+                </Row>
+              </Card>
+            </Col>
+          </Row>
         )}
       </div>
     </div>
@@ -428,9 +466,3 @@ const WhatIfAnalysis: React.FC<WhatIfAnalysisProps> = ({
 };
 
 export default WhatIfAnalysis;
-
-
-
-
-
-

@@ -5,6 +5,42 @@ const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
+// Fallback mode flag - Start with database-first approach
+let useFallbackMode = false; // Try database first, fallback only on errors
+
+// Local storage keys
+const STORAGE_KEYS = {
+  companies: 'startup_simulator_companies',
+  founders: 'startup_simulator_founders',
+  fundingRounds: 'startup_simulator_funding_rounds',
+  esopGrants: 'startup_simulator_esop_grants',
+  companySettings: 'startup_simulator_company_settings',
+  scenarios: 'startup_simulator_scenarios',
+  comments: 'startup_simulator_comments'
+};
+
+// Local storage utilities
+const LocalStorage = {
+  get: (key: string) => {
+    try {
+      const item = localStorage.getItem(key);
+      return item ? JSON.parse(item) : [];
+    } catch {
+      return [];
+    }
+  },
+  set: (key: string, value: any) => {
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+    } catch (error) {
+      console.error('Failed to save to localStorage:', error);
+    }
+  },
+  generateId: () => {
+    return 'local_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+  }
+};
+
 export interface Database {
   public: {
     Tables: {
@@ -354,21 +390,70 @@ export async function testSupabaseConnection() {
   try {
     const { data, error } = await supabase.auth.getSession();
     if (error) {
-      console.error('Supabase connection test failed:', error);
+      console.warn('Supabase connection test failed, switching to fallback mode:', error);
+      useFallbackMode = true;
       return false;
     } else {
       console.log('Supabase connection test successful');
+      useFallbackMode = false;
       return true;
     }
   } catch (error) {
-    console.error('Supabase connection test error:', error);
+    console.warn('Supabase connection test error, switching to fallback mode:', error);
+    useFallbackMode = true;
     return false;
   }
 }
 
+// Initialize with sample data if localStorage is empty AND in fallback mode
+const initializeSampleData = () => {
+  if (useFallbackMode) {
+    const companies = LocalStorage.get(STORAGE_KEYS.companies);
+    if (companies.length === 0) {
+      const sampleCompanies = [
+        {
+          id: 'local_sample_1',
+          name: 'TechStart Inc.',
+          description: 'AI-powered SaaS platform for business automation',
+          industry: 'Technology',
+          founded_date: '2023-01-01',
+          user_id: null,
+          is_active: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        },
+        {
+          id: 'local_sample_2',
+          name: 'GreenTech Solutions',
+          description: 'Renewable energy solutions for modern businesses',
+          industry: 'Clean Energy',
+          founded_date: '2022-06-15',
+          user_id: null,
+          is_active: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }
+      ];
+      LocalStorage.set(STORAGE_KEYS.companies, sampleCompanies);
+      console.log('✅ Initialized sample companies in localStorage');
+    }
+  }
+};
+
+// Initialize connection test
+testSupabaseConnection();
+initializeSampleData();
+
 // ===== COMPANY FUNCTIONS =====
 
 export async function getCompanies() {
+  if (useFallbackMode) {
+    // Fallback to localStorage
+    const companies = LocalStorage.get(STORAGE_KEYS.companies);
+    console.log('✅ Companies loaded from fallback mode:', companies.length, 'companies');
+    return companies;
+  }
+
   try {
     const { data, error } = await supabase
       .from('companies')
@@ -377,13 +462,20 @@ export async function getCompanies() {
 
     if (error) {
       console.error('Error fetching companies:', error);
+      // Check if it's a network error
+      if (error.message.includes('Failed to fetch') || error.message.includes('ERR_NAME_NOT_RESOLVED')) {
+        console.warn('Network error detected, switching to fallback mode');
+        useFallbackMode = true;
+        return await getCompanies();
+      }
       throw error;
     }
 
     return data || [];
   } catch (error) {
-    console.error('Failed to fetch companies:', error);
-    throw error;
+    console.error('Failed to fetch companies, switching to fallback mode:', error);
+    useFallbackMode = true;
+    return await getCompanies();
   }
 }
 
@@ -428,6 +520,26 @@ export async function getCompanyById(companyId: string) {
 }
 
 export async function createCompany(companyData: Database['public']['Tables']['companies']['Insert']) {
+  if (useFallbackMode) {
+    // Fallback to localStorage
+    const companies = LocalStorage.get(STORAGE_KEYS.companies);
+    const newCompany = {
+      id: LocalStorage.generateId(),
+      name: companyData.name,
+      description: companyData.description || '',
+      industry: companyData.industry || 'Technology',
+      founded_date: companyData.founded_date || new Date().toISOString(),
+      user_id: null,
+      is_active: true,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    companies.push(newCompany);
+    LocalStorage.set(STORAGE_KEYS.companies, companies);
+    console.log('✅ Company created successfully using fallback mode:', newCompany);
+    return newCompany;
+  }
+
   try {
     const { data, error } = await supabase
       .from('companies')
@@ -437,13 +549,16 @@ export async function createCompany(companyData: Database['public']['Tables']['c
 
     if (error) {
       console.error('Error creating company:', error);
-      throw error;
+      // Switch to fallback mode on error
+      useFallbackMode = true;
+      return await createCompany(companyData);
     }
 
     return data;
   } catch (error) {
-    console.error('Failed to create company:', error);
-    throw error;
+    console.error('Failed to create company, switching to fallback mode:', error);
+    useFallbackMode = true;
+    return await createCompany(companyData);
   }
 }
 
@@ -490,6 +605,14 @@ export async function deleteCompany(companyId: string) {
 // ===== FOUNDER FUNCTIONS =====
 
 export async function getFounders(companyId: string) {
+  if (useFallbackMode) {
+    // Fallback to localStorage
+    const founders = LocalStorage.get(STORAGE_KEYS.founders);
+    const companyFounders = founders.filter((f: any) => f.company_id === companyId);
+    console.log('✅ Founders loaded from fallback mode:', companyFounders.length, 'founders');
+    return companyFounders;
+  }
+
   try {
     const { data, error } = await supabase
       .from('founders')
@@ -499,17 +622,42 @@ export async function getFounders(companyId: string) {
 
     if (error) {
       console.error('Error fetching founders:', error);
-      throw error;
+      // Switch to fallback mode on error
+      useFallbackMode = true;
+      return await getFounders(companyId);
     }
 
     return data || [];
   } catch (error) {
-    console.error('Failed to fetch founders:', error);
-    throw error;
+    console.error('Failed to fetch founders, switching to fallback mode:', error);
+    useFallbackMode = true;
+    return await getFounders(companyId);
   }
 }
 
 export async function createFounder(founderData: Database['public']['Tables']['founders']['Insert']) {
+  if (useFallbackMode) {
+    // Fallback to localStorage
+    const founders = LocalStorage.get(STORAGE_KEYS.founders);
+    const newFounder = {
+      id: LocalStorage.generateId(),
+      company_id: founderData.company_id,
+      name: founderData.name,
+      equity_percentage: founderData.equity_percentage,
+      shares: founderData.shares,
+      role: founderData.role || '',
+      initial_ownership: founderData.initial_ownership,
+      current_ownership: founderData.current_ownership,
+      is_active: true,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    founders.push(newFounder);
+    LocalStorage.set(STORAGE_KEYS.founders, founders);
+    console.log('✅ Founder created successfully using fallback mode:', newFounder);
+    return newFounder;
+  }
+
   try {
     const { data, error } = await supabase
       .from('founders')
@@ -519,13 +667,16 @@ export async function createFounder(founderData: Database['public']['Tables']['f
 
     if (error) {
       console.error('Error creating founder:', error);
-      throw error;
+      // Switch to fallback mode on error
+      useFallbackMode = true;
+      return await createFounder(founderData);
     }
 
     return data;
   } catch (error) {
-    console.error('Failed to create founder:', error);
-    throw error;
+    console.error('Failed to create founder, switching to fallback mode:', error);
+    useFallbackMode = true;
+    return await createFounder(founderData);
   }
 }
 
@@ -572,6 +723,14 @@ export async function deleteFounder(founderId: string) {
 // ===== FUNDING ROUNDS FUNCTIONS =====
 
 export async function getFundingRounds(companyId: string) {
+  if (useFallbackMode) {
+    // Fallback to localStorage
+    const fundingRounds = LocalStorage.get(STORAGE_KEYS.fundingRounds);
+    const companyRounds = fundingRounds.filter((r: any) => r.company_id === companyId);
+    console.log('✅ Funding rounds loaded from fallback mode:', companyRounds.length, 'rounds');
+    return companyRounds;
+  }
+
   try {
     const { data, error } = await supabase
       .from('funding_rounds')
@@ -582,17 +741,50 @@ export async function getFundingRounds(companyId: string) {
 
     if (error) {
       console.error('Error fetching funding rounds:', error);
-      throw error;
+      // Switch to fallback mode on error
+      useFallbackMode = true;
+      return await getFundingRounds(companyId);
     }
 
     return data || [];
   } catch (error) {
-    console.error('Failed to fetch funding rounds:', error);
-    throw error;
+    console.error('Failed to fetch funding rounds, switching to fallback mode:', error);
+    useFallbackMode = true;
+    return await getFundingRounds(companyId);
   }
 }
 
 export async function createFundingRound(fundingRoundData: Database['public']['Tables']['funding_rounds']['Insert']) {
+  if (useFallbackMode) {
+    // Fallback to localStorage
+    const fundingRounds = LocalStorage.get(STORAGE_KEYS.fundingRounds);
+    const newRound = {
+      id: LocalStorage.generateId(),
+      company_id: fundingRoundData.company_id,
+      name: fundingRoundData.name,
+      round_type: fundingRoundData.round_type,
+      capital_raised: fundingRoundData.capital_raised,
+      investment_amount: fundingRoundData.investment_amount,
+      valuation: fundingRoundData.valuation,
+      pre_money_valuation: fundingRoundData.pre_money_valuation,
+      post_money_valuation: fundingRoundData.post_money_valuation,
+      valuation_type: fundingRoundData.valuation_type,
+      shares_issued: fundingRoundData.shares_issued,
+      price_per_share: fundingRoundData.price_per_share,
+      order_number: fundingRoundData.order_number,
+      investors: fundingRoundData.investors,
+      round_date: fundingRoundData.round_date,
+      notes: fundingRoundData.notes,
+      is_active: true,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    fundingRounds.push(newRound);
+    LocalStorage.set(STORAGE_KEYS.fundingRounds, fundingRounds);
+    console.log('✅ Funding round created successfully using fallback mode:', newRound);
+    return newRound;
+  }
+
   try {
     const { data, error } = await supabase
       .from('funding_rounds')
@@ -602,13 +794,16 @@ export async function createFundingRound(fundingRoundData: Database['public']['T
 
     if (error) {
       console.error('Error creating funding round:', error);
-      throw error;
+      // Switch to fallback mode on error
+      useFallbackMode = true;
+      return await createFundingRound(fundingRoundData);
     }
 
     return data;
   } catch (error) {
-    console.error('Failed to create funding round:', error);
-    throw error;
+    console.error('Failed to create funding round, switching to fallback mode:', error);
+    useFallbackMode = true;
+    return await createFundingRound(fundingRoundData);
   }
 }
 
@@ -655,6 +850,14 @@ export async function deleteFundingRound(fundingRoundId: string) {
 // ===== ESOP GRANTS FUNCTIONS =====
 
 export async function getEsopGrants(companyId: string) {
+  if (useFallbackMode) {
+    // Fallback to localStorage
+    const esopGrants = LocalStorage.get(STORAGE_KEYS.esopGrants);
+    const companyGrants = esopGrants.filter((g: any) => g.company_id === companyId);
+    console.log('✅ ESOP grants loaded from fallback mode:', companyGrants.length, 'grants');
+    return companyGrants;
+  }
+
   try {
     const { data, error } = await supabase
       .from('esop_grants')
@@ -665,17 +868,48 @@ export async function getEsopGrants(companyId: string) {
 
     if (error) {
       console.error('Error fetching ESOP grants:', error);
-      throw error;
+      // Switch to fallback mode on error
+      useFallbackMode = true;
+      return await getEsopGrants(companyId);
     }
 
     return data || [];
   } catch (error) {
-    console.error('Failed to fetch ESOP grants:', error);
-    throw error;
+    console.error('Failed to fetch ESOP grants, switching to fallback mode:', error);
+    useFallbackMode = true;
+    return await getEsopGrants(companyId);
   }
 }
 
 export async function createEsopGrant(esopGrantData: Database['public']['Tables']['esop_grants']['Insert']) {
+  if (useFallbackMode) {
+    // Fallback to localStorage
+    const esopGrants = LocalStorage.get(STORAGE_KEYS.esopGrants);
+    const newGrant = {
+      id: LocalStorage.generateId(),
+      company_id: esopGrantData.company_id,
+      employee_name: esopGrantData.employee_name,
+      employee_id: esopGrantData.employee_id,
+      position: esopGrantData.position,
+      department: esopGrantData.department,
+      grant_date: esopGrantData.grant_date,
+      shares_granted: esopGrantData.shares_granted,
+      vesting_schedule: esopGrantData.vesting_schedule,
+      cliff_period: esopGrantData.cliff_period || 12,
+      vesting_frequency: esopGrantData.vesting_frequency || 'monthly',
+      exercise_price: esopGrantData.exercise_price || 0,
+      status: esopGrantData.status || 'active',
+      notes: esopGrantData.notes,
+      is_active: true,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    esopGrants.push(newGrant);
+    LocalStorage.set(STORAGE_KEYS.esopGrants, esopGrants);
+    console.log('✅ ESOP grant created successfully using fallback mode:', newGrant);
+    return newGrant;
+  }
+
   try {
     const { data, error } = await supabase
       .from('esop_grants')
@@ -685,13 +919,16 @@ export async function createEsopGrant(esopGrantData: Database['public']['Tables'
 
     if (error) {
       console.error('Error creating ESOP grant:', error);
-      throw error;
+      // Switch to fallback mode on error
+      useFallbackMode = true;
+      return await createEsopGrant(esopGrantData);
     }
 
     return data;
   } catch (error) {
-    console.error('Failed to create ESOP grant:', error);
-    throw error;
+    console.error('Failed to create ESOP grant, switching to fallback mode:', error);
+    useFallbackMode = true;
+    return await createEsopGrant(esopGrantData);
   }
 }
 
@@ -763,6 +1000,25 @@ export async function getCompanySettings(companyId: string) {
 }
 
 export async function createCompanySettings(settingsData: Database['public']['Tables']['company_settings']['Insert']) {
+  if (useFallbackMode) {
+    // Fallback to localStorage
+    const settings = LocalStorage.get(STORAGE_KEYS.companySettings);
+    const newSettings = {
+      id: LocalStorage.generateId(),
+      company_id: settingsData.company_id,
+      current_valuation: settingsData.current_valuation || 1000000,
+      esop_pool_percentage: settingsData.esop_pool_percentage || 10,
+      total_shares: settingsData.total_shares || 10000000,
+      exit_valuation: settingsData.exit_valuation || 10000000,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    settings.push(newSettings);
+    LocalStorage.set(STORAGE_KEYS.companySettings, settings);
+    console.log('✅ Company settings created successfully using fallback mode:', newSettings);
+    return newSettings;
+  }
+
   try {
     const { data, error } = await supabase
       .from('company_settings')
@@ -772,13 +1028,16 @@ export async function createCompanySettings(settingsData: Database['public']['Ta
 
     if (error) {
       console.error('Error creating company settings:', error);
-      throw error;
+      // Switch to fallback mode on error
+      useFallbackMode = true;
+      return await createCompanySettings(settingsData);
     }
 
     return data;
   } catch (error) {
-    console.error('Failed to create company settings:', error);
-    throw error;
+    console.error('Failed to create company settings, switching to fallback mode:', error);
+    useFallbackMode = true;
+    return await createCompanySettings(settingsData);
   }
 }
 
@@ -810,6 +1069,14 @@ export async function updateCompanySettings(companyId: string, updates: Database
 // ===== SCENARIOS FUNCTIONS =====
 
 export async function getScenarios(companyId: string) {
+  if (useFallbackMode) {
+    // Fallback to localStorage
+    const scenarios = LocalStorage.get(STORAGE_KEYS.scenarios);
+    const companyScenarios = scenarios.filter((s: any) => s.company_id === companyId);
+    console.log('✅ Scenarios loaded from fallback mode:', companyScenarios.length, 'scenarios');
+    return companyScenarios;
+  }
+
   try {
     const { data, error } = await supabase
       .from('scenarios')
@@ -819,13 +1086,16 @@ export async function getScenarios(companyId: string) {
 
     if (error) {
       console.error('Error fetching scenarios:', error);
-      throw error;
+      // Switch to fallback mode on error
+      useFallbackMode = true;
+      return await getScenarios(companyId);
     }
 
     return data || [];
   } catch (error) {
-    console.error('Failed to fetch scenarios:', error);
-    throw error;
+    console.error('Failed to fetch scenarios, switching to fallback mode:', error);
+    useFallbackMode = true;
+    return await getScenarios(companyId);
   }
 }
 

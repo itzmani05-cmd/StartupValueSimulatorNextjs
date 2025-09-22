@@ -112,3 +112,8 @@ If you encounter issues:
 **Compatibility**: Supabase PostgreSQL
 
 
+
+
+
+
+
