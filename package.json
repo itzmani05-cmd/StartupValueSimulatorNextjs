@@ -1,0 +1,75 @@
+{
+  "name": "startup-simulator-next",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A professional startup valuation platform with advanced cap table modeling, ESOP management, Monte Carlo simulations, and scenario planning.",
+  "keywords": [
+    "startup",
+    "valuation",
+    "cap-table",
+    "esop",
+    "monte-carlo",
+    "financial-modeling",
+    "equity-management"
+  ],
+  "homepage": "https://github.com/your-username/startup-simulator-next#readme",
+  "bugs": {
+    "url": "https://github.com/your-username/startup-simulator-next/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/your-username/startup-simulator-next.git"
+  },
+  "license": "MIT",
+  "author": "Startup Value Simulator Team",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "type-check": "tsc --noEmit",
+    "db:init": "node scripts/init-database.js",
+    "db:check": "node scripts/init-database.js",
+    "db:update": "node scripts/update-database.js",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "coverage": "vitest run --coverage",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "prepare": "husky install"
+  },
+  "dependencies": {
+    "@ant-design/icons": "^6.0.2",
+    "@supabase/supabase-js": "^2.56.0",
+    "antd": "^5.27.4",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-error-boundary": "^6.0.0",
+    "react-is": "^19.1.1",
+    "recharts": "^3.1.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.17",
+    "@types/react": "^18.2.37",
+    "@types/react-dom": "^18.2.15",
+    "@types/semver": "^7.7.1",
+    "@typescript-eslint/eslint-plugin": "^6.10.0",
+    "@typescript-eslint/parser": "^6.10.0",
+    "@vitejs/plugin-react": "^4.2.1",
+    "autoprefixer": "^10.4.21",
+    "eslint": "^8.53.0",
+    "eslint-config-prettier": "^9.0.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-refresh": "^0.4.4",
+    "husky": "^8.0.0",
+    "postcss": "^8.5.6",
+    "prettier": "^3.0.0",
+    "typescript": "^5.3.2",
+    "vite": "^5.0.0",
+    "vitest": "^1.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  }
+}

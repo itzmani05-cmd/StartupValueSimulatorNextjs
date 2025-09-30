@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Fallback Mode</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-result { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Fallback Mode Test</h1>
+    <p>This page tests the localStorage fallback functionality.</p>
+    
+    <button onclick="testLocalStorage()">Test localStorage</button>
+    <button onclick="clearLocalStorage()">Clear localStorage</button>
+    <button onclick="checkStoredData()">Check Stored Data</button>
+    
+    <div id="results"></div>
+
+    <script>
+        const STORAGE_KEYS = {
+            companies: 'startup_simulator_companies',
+            founders: 'startup_simulator_founders',
+            fundingRounds: 'startup_simulator_funding_rounds',
+            esopGrants: 'startup_simulator_esop_grants',
+            companySettings: 'startup_simulator_company_settings',
+            scenarios: 'startup_simulator_scenarios',
+            comments: 'startup_simulator_comments'
+        };
+
+        const LocalStorage = {
+            get: (key) => {
+                try {
+                    const item = localStorage.getItem(key);
+                    return item ? JSON.parse(item) : [];
+                } catch {
+                    return [];
+                }
+            },
+            set: (key, value) => {
+                try {
+                    localStorage.setItem(key, JSON.stringify(value));
+                    return true;
+                } catch (error) {
+                    console.error('Failed to save to localStorage:', error);
+                    return false;
+                }
+            },
+            generateId: () => {
+                return 'local_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            }
+        };
+
+        function showResult(message, isSuccess = true) {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `test-result ${isSuccess ? 'success' : 'error'}`;
+            div.innerHTML = message;
+            results.appendChild(div);
+        }
+
+        function testLocalStorage() {
+            const results = document.getElementById('results');
+            results.innerHTML = '';
+            
+            // Test creating a company
+            const testCompany = {
+                id: LocalStorage.generateId(),
+                name: 'Test Company',
+                description: 'A test company for fallback mode',
+                industry: 'Technology',
+                founded_date: '2023-01-01',
+                user_id: null,
+                is_active: true,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+            };
+
+            // Save to localStorage
+            const companies = LocalStorage.get(STORAGE_KEYS.companies);
+            companies.push(testCompany);
+            const saved = LocalStorage.set(STORAGE_KEYS.companies, companies);
+
+            if (saved) {
+                showResult('✅ Successfully saved test company to localStorage', true);
+                showResult(`📊 Company ID: ${testCompany.id}`, true);
+                showResult(`🏢 Company Name: ${testCompany.name}`, true);
+            } else {
+                showResult('❌ Failed to save to localStorage', false);
+            }
+
+            // Test retrieval
+            const retrieved = LocalStorage.get(STORAGE_KEYS.companies);
+            if (retrieved.length > 0) {
+                showResult(`✅ Successfully retrieved ${retrieved.length} companies from localStorage`, true);
+            } else {
+                showResult('❌ Failed to retrieve companies from localStorage', false);
+            }
+        }
+
+        function clearLocalStorage() {
+            Object.values(STORAGE_KEYS).forEach(key => {
+                localStorage.removeItem(key);
+            });
+            document.getElementById('results').innerHTML = '';
+            showResult('🗑️ Cleared all localStorage data', true);
+        }
+
+        function checkStoredData() {
+            const results = document.getElementById('results');
+            results.innerHTML = '';
+            
+            Object.entries(STORAGE_KEYS).forEach(([name, key]) => {
+                const data = LocalStorage.get(key);
+                showResult(`${name}: ${data.length} items`, true);
+            });
+        }
+    </script>
+</body>
+</html>
