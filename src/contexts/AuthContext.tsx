@@ -16,9 +16,9 @@ interface User {
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<{ success: boolean; message: string }>;
   logout: () => Promise<void>;
-  signUp: (email: string, password: string, name: string) => Promise<void>;
+  signUp: (email: string, password: string, name: string) => Promise<{ success: boolean; message: string }>;
   updateUserProfile: (updates: Partial<User>) => Promise<void>;
   setUser: (user: User | null) => void;
   loading: boolean;
@@ -216,7 +216,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // First, check if user exists in our database
       const userExists = await checkUserExists(email);
       if (!userExists) {
-        throw new Error('No account found with this email. Please sign up first.');
+        return { success: false, message: 'No account found with this email. Please sign up first.' };
       }
 
       // Authenticate with Supabase
@@ -225,9 +225,20 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         password,
       });
       
-      if (error) throw error;
+      if (error) {
+        // Handle specific error cases
+        if (error.message.includes('Email not confirmed')) {
+          return { success: false, message: 'Please confirm your email address before logging in. Check your inbox for the confirmation email.' };
+        }
+        return { success: false, message: error.message || 'Login failed. Please check your credentials and try again.' };
+      }
       
       if (data.user) {
+        // Check if email is confirmed
+        if (!data.user.email_confirmed_at) {
+          return { success: false, message: 'Please confirm your email address before logging in. Check your inbox for the confirmation email.' };
+        }
+        
         // Ensure user exists in database
         const userData = await ensureUserInDatabase(
           data.user.id, 
@@ -253,10 +264,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         
         // Redirect to user-specific URL
         window.location.hash = `#/user/${data.user.id}`;
+        
+        return { success: true, message: 'Login successful!' };
       }
+      
+      return { success: false, message: 'Login failed. Please try again.' };
     } catch (error: any) {
       console.error('Login error:', error);
-      throw error;
+      return { success: false, message: error.message || 'An unexpected error occurred during login.' };
     } finally {
       setLoading(false);
     }
@@ -287,7 +302,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         },
       });
       
-      if (error) throw error;
+      if (error) {
+        return { success: false, message: error.message || 'Signup failed. Please try again.' };
+      }
       
       if (data.user) {
         // Ensure user exists in database
@@ -307,12 +324,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setUser(userObject);
         saveUserToLocalStorage(userObject);
         
-        // Redirect to user-specific URL
-        window.location.hash = `#/user/${data.user.id}`;
+        // For signup, we don't automatically redirect to the app
+        // Instead, we inform the user to check their email for confirmation
+        return { 
+          success: true, 
+          message: 'Registration successful! Please check your email to confirm your account before logging in.' 
+        };
       }
+      
+      return { success: false, message: 'Signup failed. Please try again.' };
     } catch (error: any) {
       console.error('Signup error:', error);
-      throw error;
+      return { success: false, message: error.message || 'An unexpected error occurred during signup.' };
     } finally {
       setLoading(false);
     }

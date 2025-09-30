@@ -24,17 +24,16 @@ const LoginPage: React.FC = () => {
       return;
     }
     
-    try {;
-      await login(email, password);
-      message.success('Login successful!');
+    try {
+      const result = await login(email, password);
+      if (result.success) {
+        message.success(result.message);
+      } else {
+        message.error(result.message);
+      }
     } catch (err: any) {
       console.error('Login error:', err);
-      // Show specific error message based on the error type
-      if (err.message) {
-        message.error(`Login failed: ${err.message}`);
-      } else {
-        message.error('Login failed. Please check your credentials and try again.');
-      }
+      message.error('An unexpected error occurred. Please try again.');
     }
   };
 
@@ -57,20 +56,18 @@ const LoginPage: React.FC = () => {
     }
     
     try {
-      await signUp(email, password, name);
-      message.success('Registration successful! Please check your email to confirm your account.');
-      // Reset form
-      setEmail('');
-      setPassword('');
-      setName('');
+      const result = await signUp(email, password, name);
+      message[result.success ? 'success' : 'error'](result.message);
+      
+      // If registration was successful, reset the form
+      if (result.success) {
+        setEmail('');
+        setPassword('');
+        setName('');
+      }
     } catch (err: any) {
       console.error('Registration error:', err);
-      // Show specific error message based on the error type
-      if (err.message) {
-        message.error(`Registration failed: ${err.message}`);
-      } else {
-        message.error('Registration failed. Please try again.');
-      }
+      message.error('An unexpected error occurred. Please try again.');
     }
   };
 
