@@ -226,10 +226,12 @@ const Root: React.FC = () => {
         </AuthProvider>
       );
     default:
-      console.log('Defaulting to login page'); // Debug log
+      console.log('Defaulting to home page'); // Debug log
+      // Instead of defaulting to login, default to home page for better UX
+      window.location.hash = '#/home';
       return (
         <AuthProvider>
-          <LoginPage />
+          <Home />
         </AuthProvider>
       );
   }

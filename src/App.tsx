@@ -362,21 +362,31 @@ function App({ initialCompanyId, userId }: AppProps) {
     );
   }
   
-  // If not logged in and we don't have a userId prop, redirect to login
-  // But if we have a userId prop, it means we're in a user-specific route and should wait for auth context to update
+  // If not logged in and we don't have a userId prop, but we're trying to access a specific route
+  // that doesn't require authentication, allow it
   if (!user && !userId) {
-    window.location.hash = '#/login';
-    return (
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        height: '100vh',
-        background: 'linear-gradient(to bottom right, #f0f9ff, #e0f2fe)'
-      }}>
-        <Spin size="large" />
-      </div>
-    );
+    // Check if we're on a route that should be accessible without login
+    const currentPath = window.location.hash.slice(1);
+    const publicRoutes = ['/home', '/features', '/learn-more', '/documentation', '/simple-features', '/features-no-animation'];
+    
+    if (publicRoutes.includes(currentPath)) {
+      // Allow access to public routes
+      console.log('Allowing access to public route:', currentPath);
+    } else {
+      // Redirect to login for protected routes
+      window.location.hash = '#/login';
+      return (
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          alignItems: 'center', 
+          height: '100vh',
+          background: 'linear-gradient(to bottom right, #f0f9ff, #e0f2fe)'
+        }}>
+          <Spin size="large" />
+        </div>
+      );
+    }
   }
   
   // If we have a userId prop but no user in context yet, show loading state
@@ -426,6 +436,12 @@ function App({ initialCompanyId, userId }: AppProps) {
       <Header 
         showAuthControls={true}
         onNavigate={(path) => {
+          // Special handling for home navigation
+          if (path === '/home') {
+            window.location.hash = '#/home';
+            return;
+          }
+          
           if (path === '/login') {
             handleLogout();
           } else {

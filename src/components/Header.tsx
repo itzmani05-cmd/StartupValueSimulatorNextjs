@@ -30,6 +30,13 @@ const Header: React.FC<HeaderProps> = ({ showAuthControls = true, onNavigate }) 
   };
 
   const handleNavigate = (path: string) => {
+    // Special handling for home navigation - always allow it
+    if (path === '/home') {
+      window.location.hash = '#/home';
+      setIsMobileMenuOpen(false);
+      return;
+    }
+    
     if (onNavigate) {
       onNavigate(path);
     } else {
